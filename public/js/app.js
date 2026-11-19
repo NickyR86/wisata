@@ -184,3 +184,8 @@ document.querySelectorAll('[data-assessment]').forEach(panel=>{
  };
  rate.addEventListener('input',update);update();
 });
+
+document.addEventListener('change', event => {
+    const control = event.target && event.target.closest ? event.target.closest('[data-autosubmit]') : null;
+    if (control && control.form) control.form.requestSubmit();
+});

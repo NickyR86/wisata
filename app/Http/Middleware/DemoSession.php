@@ -7,6 +7,7 @@ class DemoSession
     public function handle(Request $request,Closure $next)
     {
         if(config('siap.database_business')&&!config('siap.database_accounts')) abort_unless(app()->environment('local','testing'),403,'Login akun database diperlukan.');
+        if (!config('siap.database_accounts') && !app()->environment('local','testing')) { session()->forget('demo.role'); return redirect()->route('login'); }
         if (config('siap.database_accounts')) {
             $user=\App\Models\Pengguna::find(session('account_id'));
             if (!$user || $user->status_akun!=='aktif' || !hash_equals(hash('sha256',$user->password),(string)session('account_password_fingerprint'))) {

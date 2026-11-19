@@ -49,12 +49,13 @@ class DemoController extends Controller
         if (config('siap.database_accounts')) {
             $q->validate(['nip'=>'required|string|max:100','password'=>'required|string|max:128']);
             $key='login:'.hash('sha256',mb_strtolower(trim($q->nip)).'|'.$q->ip());
-            if (\Illuminate\Support\Facades\RateLimiter::tooManyAttempts($key,5))
+            $ipKey='login-ip:'.hash('sha256',(string)$q->ip());
+            if (\Illuminate\Support\Facades\RateLimiter::tooManyAttempts($key,5) || \Illuminate\Support\Facades\RateLimiter::tooManyAttempts($ipKey,20))
                 throw \Illuminate\Validation\ValidationException::withMessages(['nip'=>'Terlalu banyak percobaan. Tunggu satu menit.']);
             $user=app(\App\Services\AccountService::class)->authenticate($q->nip,$q->password);
             $role=$user?->roles()->whereIn('name',array_keys(D::ROLES))->orderBy('role_id')->value('name');
             if (!$user || !$role) {
-                \Illuminate\Support\Facades\RateLimiter::hit($key,60);
+                \Illuminate\Support\Facades\RateLimiter::hit($key,60); \Illuminate\Support\Facades\RateLimiter::hit($ipKey,60);
                 throw \Illuminate\Validation\ValidationException::withMessages(['nip'=>'Akun atau kata sandi tidak sesuai.']);
             }
             \Illuminate\Support\Facades\RateLimiter::clear($key);
@@ -63,6 +64,8 @@ class DemoController extends Controller
             \App\Support\BrowserAccess::issue($q);
             return redirect()->to(\App\Support\FormRecovery::destination($q->input('return_to'))??route('dashboard'));
         }
+        if (!app()->environment('local','testing'))
+            throw \Illuminate\Validation\ValidationException::withMessages(['nip'=>'Mode demo dinonaktifkan di lingkungan ini. Aktifkan akun database (SIAP_DATABASE_ACCOUNTS=true) atau hubungi administrator.']);
         if ($q->boolean('login_form')) {
             $q->validate(['nip'=>'required|string|min:6|max:100','password'=>'required|string'], [
                 'nip.required'=>'NIP/username wajib diisi.',
@@ -155,6 +158,8 @@ class DemoController extends Controller
         $uploadedRequirements=[];
         $loc=collect(W::locations())->firstWhere('id',(int)$data['location_id']);
         $requirements=\App\Support\PermitRequirements::forLocation($loc);
+        if($q->discount==='25'&&!$loc['managed']) return back()->withErrors(['discount'=>'Keringanan 25% hanya dapat diajukan untuk lokasi yang dikelola Dispar.'])->withInput();
+        try {
         if(!$q->boolean('files')) {
             $rules=[]; foreach($requirements as $i=>$label) $rules['requirements.'.$i]='required|file|mimes:pdf,jpg,jpeg,png|max:2048';
             $q->validate($rules);
@@ -164,12 +169,14 @@ class DemoController extends Controller
                 $uploadedRequirements[]=['label'=>$label,'name'=>basename($file->getClientOriginalName()),'sample'=>false,'stored'=>$stored,'size'=>filesize($dir.'/'.$stored)];
             }
         }
-        $loc=collect(W::locations())->firstWhere('id',(int)$data['location_id']);
-        if($q->discount==='25'&&!$loc['managed']) return back()->withErrors(['discount'=>'Keringanan 25% hanya dapat diajukan untuk lokasi yang dikelola Dispar.'])->withInput();
         $all=W::requests(); $id=(int)collect($all)->max('id')+1;
         $r=array_merge(['email'=>null,'discount_reason'=>null],$data,['id'=>$id,'tracking'=>'DPR-'.date('Y').'-'.str_pad((string)$id,4,'0',STR_PAD_LEFT),'location_id'=>(int)$data['location_id'],'days'=>(int)$data['days'],'submitted'=>date('Y-m-d'),'status'=>'masuk','files'=>array_map(fn($v)=>['label'=>$v,'name'=>'contoh_'.str_replace(' ','_',strtolower($v)).'.pdf','sample'=>true],$requirements),'discount'=>$q->discount==='25'?'diajukan':'tidak_diajukan','discount_percent'=>0,'draft'=>'','version'=>1,'bill'=>null,'payment'=>null,'documents'=>[],'signed'=>false,'recipient'=>null,'completed'=>null,'history'=>[['at'=>date('Y-m-d H:i'),'role'=>$this->role(),'action'=>'Permohonan dicatat','note'=>'Berkas contoh digunakan dalam demo.']]]);
         if($uploadedRequirements) { $r['files']=$uploadedRequirements; $r['history'][0]['note']='Berkas diunggah untuk demo lokal.'; }
         if(W::database()) { $r=app(BusinessStore::class)->create($r,W::actor()); $id=$r['id']; } else { $all[]=$r; session(['demo.requests'=>$all]); }
+        } catch (\Throwable $e) {
+            foreach($uploadedRequirements as $u) @unlink(storage_path('app/demo-uploads/'.basename((string)($u['stored']??''))));
+            throw $e;
+        }
         return redirect()->route('detail',$id)->with('success',W::database()?'Permohonan tersimpan di database lokal.':'Permohonan demo berhasil didaftarkan.');
     }
     public function updateLetterSource(Request $q,int $id)
@@ -463,7 +470,7 @@ class DemoController extends Controller
             $out=fopen('php://output','w'); fwrite($out,"\xEF\xBB\xBF");
             fputcsv($out,['DATA DEMO — BUKAN DOKUMEN RESMI']); fputcsv($out,['Nomor','Pemohon','Status','Tanggal kegiatan','Jumlah tagihan']);
             foreach($rows as $r) {
-                $safe=fn($s)=>preg_match('/^[=+@\-]/',(string)$s)?"'".$s:$s;
+                $safe=fn($s)=>preg_match('/^[=+@\-\t\r]/',(string)$s)?"'".$s:$s;
                 fputcsv($out,array_map($safe,[$r['tracking'],$r['name'],D::STATUS[$r['status']],$r['date'],$r['bill']['total']??'Belum ditetapkan']));
             } fclose($out);
         },'rekap-demo-siap-wisata.csv',['Content-Type'=>'text/csv; charset=UTF-8']);

@@ -74,7 +74,8 @@ class AccountService
     {
         $identifier=mb_strtolower(trim($identifier));
         $user=Pengguna::where('username',$identifier)->orWhere('nip',$identifier)->first();
-        if(!$user || $user->status_akun!=='aktif' || !Hash::check($password,$user->password))return null;
+        if(!$user || $user->status_akun!=='aktif'){ Hash::make($password); return null; }
+        if(!Hash::check($password,$user->password))return null;
         return $user;
     }
 }

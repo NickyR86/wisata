@@ -32,9 +32,10 @@ $labels = ['sekretariat'=>'Sekretariat','kabid'=>'Kepala Bidang','petugas'=>'Pet
 <div class="alert alert-info">Setelah masuk, Anda akan kembali ke formulir sebelumnya.</div>
 @endif
 <input type="hidden" name="login_form" value="1">
-<div><label for="nip">NIP / Username <span class="required">*</span></label><input class="form-control" id="nip" name="nip" type="text" value="{{ old('nip', config('siap.database_accounts') ? '' : '198703122010011002') }}" placeholder="Masukkan NIP" minlength="6" maxlength="100" autocomplete="username" required></div>
-<div><label for="password">Kata Sandi <span class="required">*</span></label><input class="form-control" id="password" name="password" type="password" value="{{ config('siap.database_accounts') ? '' : 'demo1234' }}" placeholder="••••••••" autocomplete="current-password" required></div>
+<div><label for="nip">NIP / Username <span class="required">*</span></label><input class="form-control" id="nip" name="nip" type="text" value="{{ old('nip', (config('siap.database_accounts') || !app()->environment('local','testing')) ? '' : '198703122010011002') }}" placeholder="Masukkan NIP" minlength="6" maxlength="100" autocomplete="username" required></div>
+<div><label for="password">Kata Sandi <span class="required">*</span></label><input class="form-control" id="password" name="password" type="password" value="{{ (config('siap.database_accounts') || !app()->environment('local','testing')) ? '' : 'demo1234' }}" placeholder="••••••••" autocomplete="current-password" required></div>
 @unless(config('siap.database_accounts'))<div><label for="role">Masuk sebagai peran (demo)</label><select class="form-select" name="role" id="role">@foreach($labels as $key=>$label)<option value="{{ $key }}" @selected(old('role','sekretariat')===$key)>{{ $label }}</option>@endforeach</select></div>@endunless
+@if(!config('siap.database_accounts') && !app()->environment('local','testing'))<div class="alert alert-warning mb-0" role="alert">Mode demo tidak tersedia di lingkungan ini. Akun database belum diaktifkan; hubungi administrator.</div>@endif
 @if($errors->any())<div class="alert alert-danger mb-0" role="alert">{{ $errors->first() }}</div>@endif
 <button type="submit" class="btn btn-primary w-100"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-7-7 7 7-7 7"/></svg>Masuk</button>
 </form>

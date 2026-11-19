@@ -13,6 +13,7 @@
 # Local credentials, runtime data, and editor artifacts
 /.env.*
 !/.env.example
+!/.env.production.example
 /storage/**
 !/storage/**/
 !/storage/**/.gitignore
