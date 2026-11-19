@@ -1,0 +1,180 @@
+@startuml
+!pragma layout smetana
+hide circle
+hide methods
+skinparam linetype ortho
+skinparam shadowing false
+skinparam nodesep 65
+skinparam ranksep 70
+title SIAP-Wisata revisi 1 - 03-keuangan-arsip
+entity "pengguna" as pengguna {
+  {field} pengguna_id : bigint [PK]
+  {field} nama : varchar(150) [NOT NULL]
+  {field} nip : varchar(20) [NULL UNIQUE]
+  {field} username : varchar(100) [NOT NULL UNIQUE]
+  {field} email : varchar(150) [NULL UNIQUE]
+  {field} password : varchar(255) [NOT NULL]
+  {field} unit_kerja : varchar(150) [NULL]
+  {field} status_akun : varchar(20) [NOT NULL]
+}
+entity "permohonan" as permohonan {
+  {field} permohonan_id : bigint [PK]
+  {field} nomor_tracking : varchar(50) [NOT NULL UNIQUE]
+  {field} nama_pemohon : varchar(150) [NOT NULL]
+  {field} penanggung_jawab : varchar(150) [NOT NULL]
+  {field} kontak_pemohon : varchar(30) [NOT NULL]
+  {field} email_pemohon : varchar(150) [NULL]
+  {field} alamat_pemohon : text [NOT NULL]
+  {field} lokasi_id : bigint [FK lokasi]
+  {field} jenis_kegiatan_id : bigint [FK jenis_kegiatan]
+  {field} tanggal_kegiatan : date [NOT NULL]
+  {field} jumlah_hari : integer [NOT NULL >0]
+  {field} diterima_pada : datetime [NOT NULL]
+  {field} status : varchar(40) [NOT NULL]
+  {field} diinput_oleh : bigint [FK pengguna]
+  {field} jenis_keringanan : varchar(20) [NOT NULL]
+  {field} status_keringanan : varchar(20) [NOT NULL]
+  {field} kategori_keringanan : varchar(100) [NULL]
+  {field} alasan_keringanan : text [NULL]
+  {field} persentase_disetujui : decimal(5,2) [NOT NULL DEFAULT 0]
+  {field} catatan_keputusan_keringanan : text [NULL]
+  {field} keringanan_diputuskan_oleh : bigint [NULL FK pengguna]
+  {field} keringanan_diputuskan_pada : datetime [NULL]
+  {field} deleted_at : datetime [NULL]
+  {field} deleted_by : bigint [NULL FK pengguna]
+  {field} alasan_hapus : text [NULL]
+}
+entity "tarif_retribusi" as tarif_retribusi {
+  {field} tarif_retribusi_id : bigint [PK]
+  {field} lokasi_id : bigint [FK lokasi]
+  {field} jenis_kegiatan_id : bigint [FK jenis_kegiatan]
+  {field} tarif : decimal(18,2) [NOT NULL >=0]
+  {field} satuan : varchar(20) [NOT NULL]
+  {field} berlaku_mulai : date [NOT NULL]
+  {field} berlaku_sampai : date [NULL]
+  {field} ditetapkan_oleh : bigint [FK pengguna]
+}
+entity "tagihan_retribusi" as tagihan_retribusi {
+  {field} tagihan_retribusi_id : bigint [PK]
+  {field} permohonan_id : bigint [FK permohonan UNIQUE]
+  {field} periode_retribusi : date [NOT NULL]
+  {field} npwr : varchar(100) [NULL]
+  {field} tanggal_jatuh_tempo : date [NULL]
+  {field} keterangan_jatuh_tempo : varchar(200) [NULL]
+  {field} subtotal : decimal(18,2) [NOT NULL >=0]
+  {field} persentase_potongan : decimal(5,2) [NOT NULL]
+  {field} nominal_potongan : decimal(18,2) [NOT NULL >=0]
+  {field} persentase_denda : decimal(5,2) [NOT NULL DEFAULT 0]
+  {field} nominal_denda : decimal(18,2) [NOT NULL DEFAULT 0]
+  {field} nominal_kenaikan : decimal(18,2) [NOT NULL DEFAULT 0]
+  {field} dasar_sanksi : text [NULL]
+  {field} jumlah_tagihan : decimal(18,2) [NOT NULL >=0]
+  {field} status : varchar(25) [NOT NULL]
+  {field} diterbitkan_oleh : bigint [NULL FK pengguna]
+  {field} diterbitkan_pada : datetime [NULL]
+  {field} catatan_penetapan : text [NULL]
+}
+entity "rincian_tagihan_retribusi" as rincian_tagihan_retribusi {
+  {field} rincian_tagihan_retribusi_id : bigint [PK]
+  {field} tagihan_retribusi_id : bigint [FK tagihan_retribusi]
+  {field} urutan : integer [NOT NULL >0]
+  {field} tarif_retribusi_id : bigint [NULL FK tarif_retribusi]
+  {field} kode_rekening : varchar(100) [NOT NULL]
+  {field} uraian : text [NOT NULL]
+  {field} kuantitas : decimal(12,2) [NOT NULL >0]
+  {field} satuan : varchar(20) [NOT NULL]
+  {field} tarif_satuan : decimal(18,2) [NOT NULL >=0]
+  {field} jumlah : decimal(18,2) [NOT NULL >=0]
+  {field} alasan_tarif_khusus : text [NULL]
+}
+entity "pembayaran" as pembayaran {
+  {field} pembayaran_id : bigint [PK]
+  {field} tagihan_retribusi_id : bigint [FK tagihan_retribusi UNIQUE]
+  {field} jumlah_bayar : decimal(18,2) [NOT NULL >0]
+  {field} tanggal_bayar : date [NOT NULL]
+  {field} metode : varchar(20) [NOT NULL]
+  {field} bank : varchar(100) [NULL]
+  {field} nomor_rekening : varchar(100) [NULL]
+  {field} referensi_transaksi : varchar(150) [NULL]
+  {field} bukti_disk : varchar(50) [NULL]
+  {field} bukti_path : varchar(500) [NULL]
+  {field} bukti_nama : varchar(255) [NULL]
+  {field} bukti_mime : varchar(100) [NULL]
+  {field} bukti_ukuran_byte : bigint [NULL]
+  {field} bukti_sha256 : char(64) [NULL]
+  {field} status : varchar(20) [NOT NULL]
+  {field} diinput_oleh : bigint [FK pengguna]
+  {field} diverifikasi_oleh : bigint [NULL FK pengguna]
+  {field} diverifikasi_pada : datetime [NULL]
+  {field} catatan : text [NULL]
+}
+entity "dokumen_terbit" as dokumen_terbit {
+  {field} dokumen_terbit_id : bigint [PK]
+  {field} jenis : varchar(30) [NOT NULL]
+  {field} surat_persetujuan_id : bigint [NULL FK surat_persetujuan UNIQUE]
+  {field} tagihan_retribusi_id : bigint [NULL FK tagihan_retribusi UNIQUE]
+  {field} pembayaran_id : bigint [NULL FK pembayaran]
+  {field} nomor_dokumen : varchar(150) [NULL]
+  {field} tahun_nomor : integer [NULL]
+  {field} status : varchar(20) [NOT NULL]
+}
+entity "versi_dokumen" as versi_dokumen {
+  {field} versi_dokumen_id : bigint [PK]
+  {field} dokumen_terbit_id : bigint [FK dokumen_terbit]
+  {field} template_surat_id : bigint [NULL FK template_surat]
+  {field} versi : integer [NOT NULL >0]
+  {field} tanggal_dokumen : date [NOT NULL]
+  {field} sumber : varchar(20) [NOT NULL]
+  {field} data_snapshot : json [NOT NULL]
+  {field} disk : varchar(50) [NULL]
+  {field} file_path : varchar(500) [NULL]
+  {field} nama_asli : varchar(255) [NULL]
+  {field} mime_type : varchar(100) [NULL]
+  {field} ukuran_byte : bigint [NULL]
+  {field} sha256 : char(64) [NULL]
+  {field} status : varchar(20) [NOT NULL]
+  {field} dibuat_oleh : bigint [FK pengguna]
+  {field} alasan_revisi : text [NULL]
+  {field} final_pada : datetime [NULL]
+}
+entity "serah_terima" as serah_terima {
+  {field} serah_terima_id : bigint [PK]
+  {field} permohonan_id : bigint [FK permohonan UNIQUE]
+  {field} nama_penerima : varchar(150) [NOT NULL]
+  {field} hubungan_penerima : varchar(100) [NULL]
+  {field} diserahkan_oleh : bigint [FK pengguna]
+  {field} diserahkan_pada : datetime [NOT NULL]
+  {field} kelengkapan_diperiksa : boolean [NOT NULL TRUE]
+  {field} bukti_disk : varchar(50) [NULL]
+  {field} bukti_path : varchar(500) [NULL]
+  {field} bukti_sha256 : char(64) [NULL]
+  {field} catatan : text [NULL]
+}
+entity "serah_terima_dokumen" as serah_terima_dokumen {
+  {field} serah_terima_id : bigint [PK FK serah_terima]
+  {field} versi_dokumen_id : bigint [PK FK versi_dokumen]
+}
+pengguna ||--o{ permohonan : diinput_oleh
+pengguna |o--o{ permohonan : keringanan_diputuskan_oleh
+pengguna |o--o{ permohonan : deleted_by
+pengguna ||--o{ tarif_retribusi : ditetapkan_oleh
+permohonan ||--o| tagihan_retribusi : permohonan_id
+pengguna |o--o{ tagihan_retribusi : diterbitkan_oleh
+tagihan_retribusi ||--o{ rincian_tagihan_retribusi : tagihan_retribusi_id
+tarif_retribusi |o--o{ rincian_tagihan_retribusi : tarif_retribusi_id
+tagihan_retribusi ||--o| pembayaran : tagihan_retribusi_id
+pengguna ||--o{ pembayaran : diinput_oleh
+pengguna |o--o{ pembayaran : diverifikasi_oleh
+tagihan_retribusi |o--o| dokumen_terbit : tagihan_retribusi_id
+pembayaran |o--o{ dokumen_terbit : pembayaran_id
+dokumen_terbit ||--o{ versi_dokumen : dokumen_terbit_id
+pengguna ||--o{ versi_dokumen : dibuat_oleh
+permohonan ||--o| serah_terima : permohonan_id
+pengguna ||--o{ serah_terima : diserahkan_oleh
+serah_terima ||--o{ serah_terima_dokumen : serah_terima_id
+versi_dokumen ||--o{ serah_terima_dokumen : versi_dokumen_id
+legend bottom
+PK/FK/NULL/UQ sesuai kamus data; tabel berulang adalah tabel yang sama.
+REF putus-putus bukan FK SQL. Constraint lintas tabel: KEPUTUSAN-DAN-ALUR.md.
+endlegend
+@enduml

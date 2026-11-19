@@ -1,0 +1,105 @@
+{
+  "archive_matches": true,
+  "files": [
+    {
+      "file": "app/Http/Controllers/DemoController.php",
+      "before_matches": true,
+      "after_matches": true
+    },
+    {
+      "file": "app/Support/DemoData.php",
+      "before_matches": true,
+      "after_matches": true
+    },
+    {
+      "file": "app/Support/FinanceDocument.php",
+      "before_matches": true,
+      "after_matches": true
+    },
+    {
+      "file": "public/css/siptr-blade.css",
+      "before_matches": true,
+      "after_matches": true
+    },
+    {
+      "file": "public/js/app.js",
+      "before_matches": true,
+      "after_matches": true
+    },
+    {
+      "file": "resources/views/arsip/index.blade.php",
+      "before_matches": true,
+      "after_matches": true
+    },
+    {
+      "file": "resources/views/dokumen/editor.blade.php",
+      "before_matches": true,
+      "after_matches": true
+    },
+    {
+      "file": "resources/views/dokumen/financial.blade.php",
+      "before_matches": true,
+      "after_matches": true
+    },
+    {
+      "file": "resources/views/dokumen/letter.blade.php",
+      "before_matches": true,
+      "after_matches": true
+    },
+    {
+      "file": "resources/views/dokumen/preview.blade.php",
+      "before_matches": true,
+      "after_matches": true
+    },
+    {
+      "file": "resources/views/dokumen/skrd.blade.php",
+      "before_matches": true,
+      "after_matches": true
+    },
+    {
+      "file": "resources/views/kalender/index.blade.php",
+      "before_matches": true,
+      "after_matches": true
+    },
+    {
+      "file": "resources/views/laporan/index.blade.php",
+      "before_matches": true,
+      "after_matches": true
+    },
+    {
+      "file": "resources/views/layouts/app.blade.php",
+      "before_matches": true,
+      "after_matches": true
+    },
+    {
+      "file": "resources/views/permohonan/action.blade.php",
+      "before_matches": true,
+      "after_matches": true
+    },
+    {
+      "file": "resources/views/permohonan/filters.blade.php",
+      "before_matches": true,
+      "after_matches": true
+    },
+    {
+      "file": "resources/views/permohonan/index.blade.php",
+      "before_matches": true,
+      "after_matches": true
+    },
+    {
+      "file": "resources/views/permohonan/work.blade.php",
+      "before_matches": true,
+      "after_matches": true
+    },
+    {
+      "file": "resources/views/persuratan/draft/editor.blade.php",
+      "before_matches": true,
+      "after_matches": true
+    },
+    {
+      "file": "resources/views/riwayat/index.blade.php",
+      "before_matches": true,
+      "after_matches": true
+    }
+  ]
+}

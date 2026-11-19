@@ -1,0 +1,1562 @@
+{
+  "pengguna": {
+    "purpose": "Akun internal; dikelola tim teknologi, bukan akun pemohon.",
+    "fields": [
+      {
+        "name": "pengguna_id",
+        "type": "bigint",
+        "rule": "PK",
+        "meaning": "Identitas akun"
+      },
+      {
+        "name": "nama",
+        "type": "varchar(150)",
+        "rule": "NOT NULL",
+        "meaning": "Nama pengguna"
+      },
+      {
+        "name": "nip",
+        "type": "varchar(20)",
+        "rule": "NULL UNIQUE",
+        "meaning": "NIP sebagai teks"
+      },
+      {
+        "name": "username",
+        "type": "varchar(100)",
+        "rule": "NOT NULL UNIQUE",
+        "meaning": "Alternatif login dan akun tanpa NIP"
+      },
+      {
+        "name": "email",
+        "type": "varchar(150)",
+        "rule": "NULL UNIQUE",
+        "meaning": "Kontak akun"
+      },
+      {
+        "name": "password",
+        "type": "varchar(255)",
+        "rule": "NOT NULL",
+        "meaning": "Hash password, tidak pernah plaintext"
+      },
+      {
+        "name": "unit_kerja",
+        "type": "varchar(150)",
+        "rule": "NULL",
+        "meaning": "Unit organisasi"
+      },
+      {
+        "name": "status_akun",
+        "type": "varchar(20)",
+        "rule": "NOT NULL",
+        "meaning": "aktif atau nonaktif"
+      }
+    ],
+    "rules": "Normalisasi username/NIP sebelum validasi. Username tidak boleh sama dengan NIP akun lain; cek lintas kolom dalam layanan pengelolaan akun. Akun historis dinonaktifkan, bukan dihapus. Role dari pivot, bukan kolom paralel."
+  },
+  "lokasi": {
+    "purpose": "Master lokasi kegiatan.",
+    "fields": [
+      {
+        "name": "lokasi_id",
+        "type": "bigint",
+        "rule": "PK",
+        "meaning": "Identitas lokasi"
+      },
+      {
+        "name": "nama_lokasi",
+        "type": "varchar(150)",
+        "rule": "NOT NULL",
+        "meaning": "Nama tempat"
+      },
+      {
+        "name": "status_aktif",
+        "type": "boolean",
+        "rule": "NOT NULL",
+        "meaning": "Boleh dipilih untuk permohonan baru"
+      },
+      {
+        "name": "dikelola_dispar",
+        "type": "boolean",
+        "rule": "NOT NULL",
+        "meaning": "Atribut sumber keputusan kelayakan yang sudah dibahas"
+      }
+    ],
+    "rules": ""
+  },
+  "jenis_kegiatan": {
+    "purpose": "Nama kegiatan konsisten antara permohonan dan tarif.",
+    "fields": [
+      {
+        "name": "jenis_kegiatan_id",
+        "type": "bigint",
+        "rule": "PK",
+        "meaning": "Identitas jenis kegiatan"
+      },
+      {
+        "name": "nama",
+        "type": "varchar(150)",
+        "rule": "NOT NULL UNIQUE",
+        "meaning": "Nama kategori kegiatan"
+      },
+      {
+        "name": "aktif",
+        "type": "boolean",
+        "rule": "NOT NULL",
+        "meaning": "Ketersediaan pilihan"
+      }
+    ],
+    "rules": ""
+  },
+  "tarif_retribusi": {
+    "purpose": "Tarif berdasarkan lokasi, jenis kegiatan dan masa berlaku.",
+    "fields": [
+      {
+        "name": "tarif_retribusi_id",
+        "type": "bigint",
+        "rule": "PK",
+        "meaning": "Identitas versi tarif"
+      },
+      {
+        "name": "lokasi_id",
+        "type": "bigint",
+        "rule": "FK lokasi",
+        "meaning": "Lokasi"
+      },
+      {
+        "name": "jenis_kegiatan_id",
+        "type": "bigint",
+        "rule": "FK jenis_kegiatan",
+        "meaning": "Jenis kegiatan"
+      },
+      {
+        "name": "tarif",
+        "type": "decimal(18,2)",
+        "rule": "NOT NULL >=0",
+        "meaning": "Tarif satuan"
+      },
+      {
+        "name": "satuan",
+        "type": "varchar(20)",
+        "rule": "NOT NULL",
+        "meaning": "hari untuk lingkup sekarang"
+      },
+      {
+        "name": "berlaku_mulai",
+        "type": "date",
+        "rule": "NOT NULL",
+        "meaning": "Awal berlaku"
+      },
+      {
+        "name": "berlaku_sampai",
+        "type": "date",
+        "rule": "NULL",
+        "meaning": "Akhir berlaku inklusif"
+      },
+      {
+        "name": "ditetapkan_oleh",
+        "type": "bigint",
+        "rule": "FK pengguna",
+        "meaning": "Admin penginput master"
+      }
+    ],
+    "rules": "UNIQUE(lokasi_id, jenis_kegiatan_id, berlaku_mulai). Akhir >= awal. Rentang untuk pasangan lokasi/kegiatan tidak boleh tumpang tindih: validasi transaksional dengan kunci pasangan. Tarif yang sudah dirujuk tidak ditimpa; buat versi baru."
+  },
+  "permohonan": {
+    "purpose": "Satu pengajuan; identitas pemohon disimpan per pengajuan.",
+    "fields": [
+      {
+        "name": "permohonan_id",
+        "type": "bigint",
+        "rule": "PK",
+        "meaning": "Identitas permohonan"
+      },
+      {
+        "name": "nomor_tracking",
+        "type": "varchar(50)",
+        "rule": "NOT NULL UNIQUE",
+        "meaning": "Nomor pencarian, bukan PK"
+      },
+      {
+        "name": "nama_pemohon",
+        "type": "varchar(150)",
+        "rule": "NOT NULL",
+        "meaning": "Nama organisasi atau individu"
+      },
+      {
+        "name": "penanggung_jawab",
+        "type": "varchar(150)",
+        "rule": "NOT NULL",
+        "meaning": "Orang yang mengurus kegiatan"
+      },
+      {
+        "name": "kontak_pemohon",
+        "type": "varchar(30)",
+        "rule": "NOT NULL",
+        "meaning": "Telepon/WhatsApp berupa teks"
+      },
+      {
+        "name": "email_pemohon",
+        "type": "varchar(150)",
+        "rule": "NULL",
+        "meaning": "Email pemohon"
+      },
+      {
+        "name": "alamat_pemohon",
+        "type": "text",
+        "rule": "NOT NULL",
+        "meaning": "Alamat untuk dokumen"
+      },
+      {
+        "name": "lokasi_id",
+        "type": "bigint",
+        "rule": "FK lokasi",
+        "meaning": "Lokasi kegiatan"
+      },
+      {
+        "name": "jenis_kegiatan_id",
+        "type": "bigint",
+        "rule": "FK jenis_kegiatan",
+        "meaning": "Kategori kegiatan"
+      },
+      {
+        "name": "tanggal_kegiatan",
+        "type": "date",
+        "rule": "NOT NULL",
+        "meaning": "Hari pertama"
+      },
+      {
+        "name": "jumlah_hari",
+        "type": "integer",
+        "rule": "NOT NULL >0",
+        "meaning": "Durasi kegiatan"
+      },
+      {
+        "name": "diterima_pada",
+        "type": "datetime",
+        "rule": "NOT NULL",
+        "meaning": "Awal pencatatan layanan"
+      },
+      {
+        "name": "status",
+        "type": "varchar(40)",
+        "rule": "NOT NULL",
+        "meaning": "Status proses dari daftar transisi"
+      },
+      {
+        "name": "diinput_oleh",
+        "type": "bigint",
+        "rule": "FK pengguna",
+        "meaning": "Petugas pencatat"
+      },
+      {
+        "name": "jenis_keringanan",
+        "type": "varchar(20)",
+        "rule": "NOT NULL",
+        "meaning": "normal, pengurangan, pembebasan"
+      },
+      {
+        "name": "status_keringanan",
+        "type": "varchar(20)",
+        "rule": "NOT NULL",
+        "meaning": "tidak_diajukan, diajukan, disetujui, ditolak"
+      },
+      {
+        "name": "kategori_keringanan",
+        "type": "varchar(100)",
+        "rule": "NULL",
+        "meaning": "Kategori dasar pengajuan"
+      },
+      {
+        "name": "alasan_keringanan",
+        "type": "text",
+        "rule": "NULL",
+        "meaning": "Alasan pemohon"
+      },
+      {
+        "name": "persentase_disetujui",
+        "type": "decimal(5,2)",
+        "rule": "NOT NULL DEFAULT 0",
+        "meaning": "0..100; 25 untuk pengurangan yang disetujui, 100 pembebasan"
+      },
+      {
+        "name": "catatan_keputusan_keringanan",
+        "type": "text",
+        "rule": "NULL",
+        "meaning": "Dasar keputusan"
+      },
+      {
+        "name": "keringanan_diputuskan_oleh",
+        "type": "bigint",
+        "rule": "NULL FK pengguna",
+        "meaning": "Akun pengambil keputusan"
+      },
+      {
+        "name": "keringanan_diputuskan_pada",
+        "type": "datetime",
+        "rule": "NULL",
+        "meaning": "Waktu keputusan"
+      },
+      {
+        "name": "deleted_at",
+        "type": "datetime",
+        "rule": "NULL",
+        "meaning": "Hapus sementara"
+      },
+      {
+        "name": "deleted_by",
+        "type": "bigint",
+        "rule": "NULL FK pengguna",
+        "meaning": "Penghapus"
+      },
+      {
+        "name": "alasan_hapus",
+        "type": "text",
+        "rule": "NULL",
+        "meaning": "Alasan penghapusan"
+      }
+    ],
+    "rules": "Tanggal selesai dihitung tanggal_kegiatan + jumlah_hari - 1. Tidak menyimpan total harga perkiraan di permohonan. Keputusan keringanan menyimpan pelaku/waktu berpasangan; keputusan sebelumnya tetap di audit. Hapus/pulihkan tidak mengubah status proses."
+  },
+  "jenis_persyaratan": {
+    "purpose": "Katalog dokumen dan kondisi kewajibannya.",
+    "fields": [
+      {
+        "name": "jenis_persyaratan_id",
+        "type": "bigint",
+        "rule": "PK",
+        "meaning": "Identitas persyaratan"
+      },
+      {
+        "name": "kode",
+        "type": "varchar(50)",
+        "rule": "NOT NULL UNIQUE",
+        "meaning": "Kode stabil"
+      },
+      {
+        "name": "nama",
+        "type": "varchar(150)",
+        "rule": "NOT NULL",
+        "meaning": "Nama dokumen"
+      },
+      {
+        "name": "kondisi_wajib",
+        "type": "varchar(40)",
+        "rule": "NOT NULL",
+        "meaning": "selalu, jika_impresariat, jika_keringanan, opsional"
+      },
+      {
+        "name": "aktif",
+        "type": "boolean",
+        "rule": "NOT NULL",
+        "meaning": "Aktif untuk pengajuan baru"
+      }
+    ],
+    "rules": "Kondisi dievaluasi server dengan konteks pemohon; bukan kode yang dieksekusi dari database. Perubahan katalog tidak mengubah persyaratan pengajuan lama."
+  },
+  "persyaratan_permohonan": {
+    "purpose": "Daftar persyaratan yang berlaku, termasuk yang belum diunggah.",
+    "fields": [
+      {
+        "name": "persyaratan_permohonan_id",
+        "type": "bigint",
+        "rule": "PK",
+        "meaning": "Identitas checklist"
+      },
+      {
+        "name": "permohonan_id",
+        "type": "bigint",
+        "rule": "FK permohonan",
+        "meaning": "Pengajuan"
+      },
+      {
+        "name": "jenis_persyaratan_id",
+        "type": "bigint",
+        "rule": "FK jenis_persyaratan",
+        "meaning": "Sumber aturan"
+      },
+      {
+        "name": "nama_snapshot",
+        "type": "varchar(150)",
+        "rule": "NOT NULL",
+        "meaning": "Nama saat aturan diterapkan"
+      },
+      {
+        "name": "wajib",
+        "type": "boolean",
+        "rule": "NOT NULL",
+        "meaning": "Hasil evaluasi kewajiban saat intake"
+      },
+      {
+        "name": "alasan_penerapan",
+        "type": "text",
+        "rule": "NULL",
+        "meaning": "Contoh: jasa impresariat tidak digunakan"
+      }
+    ],
+    "rules": "UNIQUE(permohonan_id, jenis_persyaratan_id). Checklist terisi sebelum unggah. Kelengkapan dihitung dari dokumen terbaru yang diterima untuk semua item wajib."
+  },
+  "dokumen_persyaratan": {
+    "purpose": "Versi unggahan tiap item persyaratan; penggantian tidak menimpa file lama.",
+    "fields": [
+      {
+        "name": "dokumen_persyaratan_id",
+        "type": "bigint",
+        "rule": "PK",
+        "meaning": "Identitas versi berkas"
+      },
+      {
+        "name": "persyaratan_permohonan_id",
+        "type": "bigint",
+        "rule": "FK persyaratan_permohonan",
+        "meaning": "Item checklist"
+      },
+      {
+        "name": "versi",
+        "type": "integer",
+        "rule": "NOT NULL >0",
+        "meaning": "Urutan unggahan"
+      },
+      {
+        "name": "nama_asli",
+        "type": "varchar(255)",
+        "rule": "NOT NULL",
+        "meaning": "Nama untuk tampilan"
+      },
+      {
+        "name": "disk",
+        "type": "varchar(50)",
+        "rule": "NOT NULL",
+        "meaning": "Penyimpanan privat"
+      },
+      {
+        "name": "file_path",
+        "type": "varchar(500)",
+        "rule": "NOT NULL",
+        "meaning": "Key berkas, bukan path komputer pengguna"
+      },
+      {
+        "name": "mime_type",
+        "type": "varchar(100)",
+        "rule": "NOT NULL",
+        "meaning": "Tipe hasil pemeriksaan server"
+      },
+      {
+        "name": "ukuran_byte",
+        "type": "bigint",
+        "rule": "NOT NULL >=0",
+        "meaning": "Ukuran file"
+      },
+      {
+        "name": "sha256",
+        "type": "char(64)",
+        "rule": "NOT NULL",
+        "meaning": "Sidik isi berkas"
+      },
+      {
+        "name": "diunggah_oleh",
+        "type": "bigint",
+        "rule": "FK pengguna",
+        "meaning": "Pengunggah"
+      },
+      {
+        "name": "diunggah_pada",
+        "type": "datetime",
+        "rule": "NOT NULL",
+        "meaning": "Waktu unggah"
+      },
+      {
+        "name": "status_verifikasi",
+        "type": "varchar(20)",
+        "rule": "NOT NULL",
+        "meaning": "menunggu, diterima, ditolak"
+      },
+      {
+        "name": "diverifikasi_oleh",
+        "type": "bigint",
+        "rule": "NULL FK pengguna",
+        "meaning": "Pemeriksa"
+      },
+      {
+        "name": "diverifikasi_pada",
+        "type": "datetime",
+        "rule": "NULL",
+        "meaning": "Waktu pemeriksaan"
+      },
+      {
+        "name": "catatan_verifikasi",
+        "type": "text",
+        "rule": "NULL",
+        "meaning": "Alasan koreksi"
+      }
+    ],
+    "rules": "UNIQUE(persyaratan_permohonan_id, versi). Yang terbaru adalah versi terbesar; tidak menggandakan flag aktif. Versi lama immutable setelah diganti. Penolakan berkas wajib memiliki catatan."
+  },
+  "template_surat": {
+    "purpose": "Versi format sistem untuk surat dan dokumen keuangan.",
+    "fields": [
+      {
+        "name": "template_surat_id",
+        "type": "bigint",
+        "rule": "PK",
+        "meaning": "Identitas versi template"
+      },
+      {
+        "name": "jenis",
+        "type": "varchar(30)",
+        "rule": "NOT NULL",
+        "meaning": "persetujuan, skrd, stbp, sts"
+      },
+      {
+        "name": "versi",
+        "type": "integer",
+        "rule": "NOT NULL >0",
+        "meaning": "Versi template"
+      },
+      {
+        "name": "isi_template",
+        "type": "json",
+        "rule": "NOT NULL",
+        "meaning": "Struktur field dan teks; bukan kode PHP bebas"
+      },
+      {
+        "name": "dibuat_oleh",
+        "type": "bigint",
+        "rule": "FK pengguna",
+        "meaning": "Admin pengelola"
+      },
+      {
+        "name": "dipublikasikan_pada",
+        "type": "datetime",
+        "rule": "NULL",
+        "meaning": "NULL berarti belum boleh dipakai"
+      }
+    ],
+    "rules": "UNIQUE(jenis, versi). Versi terpublikasi immutable; pemilihan default menggunakan versi terpublikasi terakhir. Revisi membuat baris baru."
+  },
+  "draft_surat": {
+    "purpose": "Isi surat per versi; petugas menyusun, Kabid/Sekretaris meninjau.",
+    "fields": [
+      {
+        "name": "draft_surat_id",
+        "type": "bigint",
+        "rule": "PK",
+        "meaning": "Identitas versi draft"
+      },
+      {
+        "name": "permohonan_id",
+        "type": "bigint",
+        "rule": "FK permohonan",
+        "meaning": "Pengajuan"
+      },
+      {
+        "name": "template_surat_id",
+        "type": "bigint",
+        "rule": "FK template_surat",
+        "meaning": "Template persetujuan yang digunakan"
+      },
+      {
+        "name": "versi",
+        "type": "integer",
+        "rule": "NOT NULL >0",
+        "meaning": "Versi per permohonan"
+      },
+      {
+        "name": "nomor_draft",
+        "type": "varchar(150)",
+        "rule": "NULL",
+        "meaning": "Nomor usulan sebelum nomor terbit"
+      },
+      {
+        "name": "tanggal_surat",
+        "type": "date",
+        "rule": "NOT NULL",
+        "meaning": "Tanggal draft"
+      },
+      {
+        "name": "perihal",
+        "type": "varchar(200)",
+        "rule": "NOT NULL",
+        "meaning": "Perihal"
+      },
+      {
+        "name": "lampiran",
+        "type": "varchar(200)",
+        "rule": "NOT NULL",
+        "meaning": "Keterangan lampiran"
+      },
+      {
+        "name": "pembuka",
+        "type": "text",
+        "rule": "NOT NULL",
+        "meaning": "Narasi pembuka"
+      },
+      {
+        "name": "isi_surat",
+        "type": "text",
+        "rule": "NOT NULL",
+        "meaning": "Isi utama"
+      },
+      {
+        "name": "ketentuan",
+        "type": "text",
+        "rule": "NOT NULL",
+        "meaning": "Syarat pelaksanaan"
+      },
+      {
+        "name": "penutup",
+        "type": "text",
+        "rule": "NOT NULL",
+        "meaning": "Narasi penutup"
+      },
+      {
+        "name": "status",
+        "type": "varchar(30)",
+        "rule": "NOT NULL",
+        "meaning": "disusun, diajukan, perlu_revisi, disetujui"
+      },
+      {
+        "name": "alasan_revisi",
+        "type": "text",
+        "rule": "NULL",
+        "meaning": "Alasan versi pengganti"
+      },
+      {
+        "name": "disusun_oleh",
+        "type": "bigint",
+        "rule": "FK pengguna",
+        "meaning": "Penulis"
+      },
+      {
+        "name": "dikirim_pada",
+        "type": "datetime",
+        "rule": "NULL",
+        "meaning": "Waktu kirim review"
+      }
+    ],
+    "rules": "UNIQUE(permohonan_id, versi). Simpan perubahan membuat versi konten baru bila isi berubah; kirim/review mengacu ID versi. Kabid tidak mengedit isi. Versi yang sudah dikirim tidak ditimpa."
+  },
+  "surat_persetujuan": {
+    "purpose": "Hubungan surat yang dirilis dengan versi draft yang telah lolos review.",
+    "fields": [
+      {
+        "name": "surat_persetujuan_id",
+        "type": "bigint",
+        "rule": "PK",
+        "meaning": "Identitas surat"
+      },
+      {
+        "name": "permohonan_id",
+        "type": "bigint",
+        "rule": "FK permohonan UNIQUE",
+        "meaning": "Satu surat logis per permohonan"
+      },
+      {
+        "name": "draft_surat_id",
+        "type": "bigint",
+        "rule": "FK draft_surat",
+        "meaning": "Versi yang dirilis"
+      },
+      {
+        "name": "dirilis_oleh",
+        "type": "bigint",
+        "rule": "FK pengguna",
+        "meaning": "Kabid yang merilis"
+      },
+      {
+        "name": "dirilis_pada",
+        "type": "datetime",
+        "rule": "NOT NULL",
+        "meaning": "Waktu rilis"
+      }
+    ],
+    "rules": "Draft harus milik permohonan yang sama dan mempunyai persetujuan Kabid + verifikasi Sekretaris untuk ID versi itu. Nomor/tanggal/file final berada pada dokumen_terbit/versi_dokumen; tidak disalin ke dua sumber mutable."
+  },
+  "tagihan_retribusi": {
+    "purpose": "Satu penetapan per permohonan; rincian menjadi dasar hitung.",
+    "fields": [
+      {
+        "name": "tagihan_retribusi_id",
+        "type": "bigint",
+        "rule": "PK",
+        "meaning": "Identitas tagihan"
+      },
+      {
+        "name": "permohonan_id",
+        "type": "bigint",
+        "rule": "FK permohonan UNIQUE",
+        "meaning": "Satu penetapan"
+      },
+      {
+        "name": "periode_retribusi",
+        "type": "date",
+        "rule": "NOT NULL",
+        "meaning": "Tanggal pertama bulan masa retribusi"
+      },
+      {
+        "name": "npwr",
+        "type": "varchar(100)",
+        "rule": "NULL",
+        "meaning": "Nomor wajib retribusi jika tersedia"
+      },
+      {
+        "name": "tanggal_jatuh_tempo",
+        "type": "date",
+        "rule": "NULL",
+        "meaning": "Wajib ketika tagihan positif diterbitkan"
+      },
+      {
+        "name": "keterangan_jatuh_tempo",
+        "type": "varchar(200)",
+        "rule": "NULL",
+        "meaning": "Teks penjelasan yang dicetak"
+      },
+      {
+        "name": "subtotal",
+        "type": "decimal(18,2)",
+        "rule": "NOT NULL >=0",
+        "meaning": "Jumlah rincian"
+      },
+      {
+        "name": "persentase_potongan",
+        "type": "decimal(5,2)",
+        "rule": "NOT NULL",
+        "meaning": "0..100 snapshot keputusan"
+      },
+      {
+        "name": "nominal_potongan",
+        "type": "decimal(18,2)",
+        "rule": "NOT NULL >=0",
+        "meaning": "Potongan hasil perhitungan"
+      },
+      {
+        "name": "persentase_denda",
+        "type": "decimal(5,2)",
+        "rule": "NOT NULL DEFAULT 0",
+        "meaning": "Disiapkan, perhitungan nonnol belum diaktifkan"
+      },
+      {
+        "name": "nominal_denda",
+        "type": "decimal(18,2)",
+        "rule": "NOT NULL DEFAULT 0",
+        "meaning": "Nilai sanksi"
+      },
+      {
+        "name": "nominal_kenaikan",
+        "type": "decimal(18,2)",
+        "rule": "NOT NULL DEFAULT 0",
+        "meaning": "Nilai kenaikan"
+      },
+      {
+        "name": "dasar_sanksi",
+        "type": "text",
+        "rule": "NULL",
+        "meaning": "Wajib bila sanksi nonnol kelak diaktifkan"
+      },
+      {
+        "name": "jumlah_tagihan",
+        "type": "decimal(18,2)",
+        "rule": "NOT NULL >=0",
+        "meaning": "Total yang harus dibayar"
+      },
+      {
+        "name": "status",
+        "type": "varchar(25)",
+        "rule": "NOT NULL",
+        "meaning": "draft, terbit, lunas, dibebaskan, dibatalkan"
+      },
+      {
+        "name": "diterbitkan_oleh",
+        "type": "bigint",
+        "rule": "NULL FK pengguna",
+        "meaning": "Bendahara"
+      },
+      {
+        "name": "diterbitkan_pada",
+        "type": "datetime",
+        "rule": "NULL",
+        "meaning": "NULL selama draft"
+      },
+      {
+        "name": "catatan_penetapan",
+        "type": "text",
+        "rule": "NULL",
+        "meaning": "Alasan tarif khusus, bila ada"
+      }
+    ],
+    "rules": "Total = subtotal - potongan + denda + kenaikan. Potongan <= subtotal. Terbit membekukan nominal; koreksi nominal sesudah terbit/pembayaran bukan sekadar edit template dan di luar lingkup awal. Status lunas berasal dari pembayaran terverifikasi; dibebaskan tidak membuat pembayaran Rp0 fiktif."
+  },
+  "rincian_tagihan_retribusi": {
+    "purpose": "Komponen perhitungan dan baris uraian SKRD.",
+    "fields": [
+      {
+        "name": "rincian_tagihan_retribusi_id",
+        "type": "bigint",
+        "rule": "PK",
+        "meaning": "Identitas baris"
+      },
+      {
+        "name": "tagihan_retribusi_id",
+        "type": "bigint",
+        "rule": "FK tagihan_retribusi",
+        "meaning": "Induk"
+      },
+      {
+        "name": "urutan",
+        "type": "integer",
+        "rule": "NOT NULL >0",
+        "meaning": "Urutan cetak"
+      },
+      {
+        "name": "tarif_retribusi_id",
+        "type": "bigint",
+        "rule": "NULL FK tarif_retribusi",
+        "meaning": "Sumber master; NULL hanya tarif khusus beralasan"
+      },
+      {
+        "name": "kode_rekening",
+        "type": "varchar(100)",
+        "rule": "NOT NULL",
+        "meaning": "Kode akun sebagai teks"
+      },
+      {
+        "name": "uraian",
+        "type": "text",
+        "rule": "NOT NULL",
+        "meaning": "Uraian komponen"
+      },
+      {
+        "name": "kuantitas",
+        "type": "decimal(12,2)",
+        "rule": "NOT NULL >0",
+        "meaning": "Jumlah hari/unit ditagihkan"
+      },
+      {
+        "name": "satuan",
+        "type": "varchar(20)",
+        "rule": "NOT NULL",
+        "meaning": "hari dalam lingkup saat ini"
+      },
+      {
+        "name": "tarif_satuan",
+        "type": "decimal(18,2)",
+        "rule": "NOT NULL >=0",
+        "meaning": "Snapshot tarif"
+      },
+      {
+        "name": "jumlah",
+        "type": "decimal(18,2)",
+        "rule": "NOT NULL >=0",
+        "meaning": "ROUND(kuantitas * tarif_satuan, 2)"
+      },
+      {
+        "name": "alasan_tarif_khusus",
+        "type": "text",
+        "rule": "NULL",
+        "meaning": "Wajib jika menyimpang dari master"
+      }
+    ],
+    "rules": "UNIQUE(tagihan_retribusi_id, urutan). Master harus cocok dengan lokasi/jenis kegiatan sumber. Layanan penetapan menentukan tarif berlaku pada tanggal kegiatan; kebijakan ini pilihan rancangan yang harus disepakati sebelum data tarif operasional diisi."
+  },
+  "pembayaran": {
+    "purpose": "Pelunasan sekali per tagihan; tidak mengasumsikan cicilan.",
+    "fields": [
+      {
+        "name": "pembayaran_id",
+        "type": "bigint",
+        "rule": "PK",
+        "meaning": "Identitas pembayaran"
+      },
+      {
+        "name": "tagihan_retribusi_id",
+        "type": "bigint",
+        "rule": "FK tagihan_retribusi UNIQUE",
+        "meaning": "Tagihan yang dibayar"
+      },
+      {
+        "name": "jumlah_bayar",
+        "type": "decimal(18,2)",
+        "rule": "NOT NULL >0",
+        "meaning": "Harus sama dengan total tagihan pada pelunasan"
+      },
+      {
+        "name": "tanggal_bayar",
+        "type": "date",
+        "rule": "NOT NULL",
+        "meaning": "Tanggal uang diterima"
+      },
+      {
+        "name": "metode",
+        "type": "varchar(20)",
+        "rule": "NOT NULL",
+        "meaning": "tunai atau transfer"
+      },
+      {
+        "name": "bank",
+        "type": "varchar(100)",
+        "rule": "NULL",
+        "meaning": "Bank penerima"
+      },
+      {
+        "name": "nomor_rekening",
+        "type": "varchar(100)",
+        "rule": "NULL",
+        "meaning": "Rekening penerima berupa teks"
+      },
+      {
+        "name": "referensi_transaksi",
+        "type": "varchar(150)",
+        "rule": "NULL",
+        "meaning": "Referensi pembayaran"
+      },
+      {
+        "name": "bukti_disk",
+        "type": "varchar(50)",
+        "rule": "NULL",
+        "meaning": "Penyimpanan bukti"
+      },
+      {
+        "name": "bukti_path",
+        "type": "varchar(500)",
+        "rule": "NULL",
+        "meaning": "Key bukti pembayaran"
+      },
+      {
+        "name": "bukti_nama",
+        "type": "varchar(255)",
+        "rule": "NULL",
+        "meaning": "Nama file"
+      },
+      {
+        "name": "bukti_mime",
+        "type": "varchar(100)",
+        "rule": "NULL",
+        "meaning": "Tipe berkas"
+      },
+      {
+        "name": "bukti_ukuran_byte",
+        "type": "bigint",
+        "rule": "NULL",
+        "meaning": "Ukuran >=0"
+      },
+      {
+        "name": "bukti_sha256",
+        "type": "char(64)",
+        "rule": "NULL",
+        "meaning": "Hash bukti"
+      },
+      {
+        "name": "status",
+        "type": "varchar(20)",
+        "rule": "NOT NULL",
+        "meaning": "menunggu, terverifikasi, ditolak"
+      },
+      {
+        "name": "diinput_oleh",
+        "type": "bigint",
+        "rule": "FK pengguna",
+        "meaning": "Pencatat"
+      },
+      {
+        "name": "diverifikasi_oleh",
+        "type": "bigint",
+        "rule": "NULL FK pengguna",
+        "meaning": "Bendahara pemeriksa"
+      },
+      {
+        "name": "diverifikasi_pada",
+        "type": "datetime",
+        "rule": "NULL",
+        "meaning": "Waktu konfirmasi"
+      },
+      {
+        "name": "catatan",
+        "type": "text",
+        "rule": "NULL",
+        "meaning": "Catatan pemeriksaan"
+      }
+    ],
+    "rules": "Satu rekaman pembayaran operasional dapat dikoreksi sebelum verifikasi dengan audit; transaksi terverifikasi dikunci. Pembatalan/refund dan percobaan cicilan tidak termasuk lingkup awal. Transfer membutuhkan referensi atau bukti sesuai prosedur."
+  },
+  "dokumen_terbit": {
+    "purpose": "Identitas dokumen logis; pemilik transaksi menggunakan FK eksplisit.",
+    "fields": [
+      {
+        "name": "dokumen_terbit_id",
+        "type": "bigint",
+        "rule": "PK",
+        "meaning": "Identitas dokumen"
+      },
+      {
+        "name": "jenis",
+        "type": "varchar(30)",
+        "rule": "NOT NULL",
+        "meaning": "persetujuan, skrd, stbp, sts"
+      },
+      {
+        "name": "surat_persetujuan_id",
+        "type": "bigint",
+        "rule": "NULL FK surat_persetujuan UNIQUE",
+        "meaning": "Pemilik surat persetujuan"
+      },
+      {
+        "name": "tagihan_retribusi_id",
+        "type": "bigint",
+        "rule": "NULL FK tagihan_retribusi UNIQUE",
+        "meaning": "Pemilik SKRD"
+      },
+      {
+        "name": "pembayaran_id",
+        "type": "bigint",
+        "rule": "NULL FK pembayaran",
+        "meaning": "Pemilik STBP/STS"
+      },
+      {
+        "name": "nomor_dokumen",
+        "type": "varchar(150)",
+        "rule": "NULL",
+        "meaning": "Wajib saat diterbitkan"
+      },
+      {
+        "name": "tahun_nomor",
+        "type": "integer",
+        "rule": "NULL",
+        "meaning": "Tahun seri penomoran"
+      },
+      {
+        "name": "status",
+        "type": "varchar(20)",
+        "rule": "NOT NULL",
+        "meaning": "draft, terbit, dibatalkan"
+      }
+    ],
+    "rules": "CHECK tepat satu FK pemilik terisi dan sesuai jenis. UNIQUE(pembayaran_id, jenis) untuk STBP/STS; UNIQUE(jenis, tahun_nomor, nomor_dokumen). Penomoran dilakukan atomik, tidak memakai MAX+1 tanpa lock. STS disimpan sebagai dokumen internal; tidak mengklaim transaksi setoran terpisah sudah dicatat."
+  },
+  "versi_dokumen": {
+    "purpose": "Snapshot lengkap setiap revisi dokumen; sumber sistem atau unggahan.",
+    "fields": [
+      {
+        "name": "versi_dokumen_id",
+        "type": "bigint",
+        "rule": "PK",
+        "meaning": "Identitas versi"
+      },
+      {
+        "name": "dokumen_terbit_id",
+        "type": "bigint",
+        "rule": "FK dokumen_terbit",
+        "meaning": "Dokumen logis"
+      },
+      {
+        "name": "template_surat_id",
+        "type": "bigint",
+        "rule": "NULL FK template_surat",
+        "meaning": "Versi template jika sumber sistem"
+      },
+      {
+        "name": "versi",
+        "type": "integer",
+        "rule": "NOT NULL >0",
+        "meaning": "Urutan versi"
+      },
+      {
+        "name": "tanggal_dokumen",
+        "type": "date",
+        "rule": "NOT NULL",
+        "meaning": "Tanggal tercetak"
+      },
+      {
+        "name": "sumber",
+        "type": "varchar(20)",
+        "rule": "NOT NULL",
+        "meaning": "sistem atau unggah"
+      },
+      {
+        "name": "data_snapshot",
+        "type": "json",
+        "rule": "NOT NULL",
+        "meaning": "Data cetak sesuai kontrak di dokumen rancangan"
+      },
+      {
+        "name": "disk",
+        "type": "varchar(50)",
+        "rule": "NULL",
+        "meaning": "Penyimpanan privat"
+      },
+      {
+        "name": "file_path",
+        "type": "varchar(500)",
+        "rule": "NULL",
+        "meaning": "File final/unggahan"
+      },
+      {
+        "name": "nama_asli",
+        "type": "varchar(255)",
+        "rule": "NULL",
+        "meaning": "Nama unggahan"
+      },
+      {
+        "name": "mime_type",
+        "type": "varchar(100)",
+        "rule": "NULL",
+        "meaning": "Tipe file"
+      },
+      {
+        "name": "ukuran_byte",
+        "type": "bigint",
+        "rule": "NULL",
+        "meaning": "Ukuran >=0"
+      },
+      {
+        "name": "sha256",
+        "type": "char(64)",
+        "rule": "NULL",
+        "meaning": "Hash file; wajib saat final"
+      },
+      {
+        "name": "status",
+        "type": "varchar(20)",
+        "rule": "NOT NULL",
+        "meaning": "draft, final"
+      },
+      {
+        "name": "dibuat_oleh",
+        "type": "bigint",
+        "rule": "FK pengguna",
+        "meaning": "Pembuat versi"
+      },
+      {
+        "name": "alasan_revisi",
+        "type": "text",
+        "rule": "NULL",
+        "meaning": "Wajib untuk versi >1"
+      },
+      {
+        "name": "final_pada",
+        "type": "datetime",
+        "rule": "NULL",
+        "meaning": "Penguncian versi"
+      }
+    ],
+    "rules": "UNIQUE(dokumen_terbit_id, versi). Konten versi yang dipakai review/tanda tangan/serah terima immutable. Sumber unggah wajib metadata file; sumber sistem wajib template. Versi final wajib file dan hash. Nominal snapshot dihasilkan dari transaksi, tidak diedit terpisah."
+  },
+  "tanda_tangan_dokumen": {
+    "purpose": "Setiap blok penandatangan per versi, termasuk dua pejabat STS.",
+    "fields": [
+      {
+        "name": "tanda_tangan_dokumen_id",
+        "type": "bigint",
+        "rule": "PK",
+        "meaning": "Identitas tanda tangan"
+      },
+      {
+        "name": "versi_dokumen_id",
+        "type": "bigint",
+        "rule": "FK versi_dokumen",
+        "meaning": "Versi yang ditandatangani"
+      },
+      {
+        "name": "urutan",
+        "type": "integer",
+        "rule": "NOT NULL >0",
+        "meaning": "Blok tanda tangan"
+      },
+      {
+        "name": "pengguna_id",
+        "type": "bigint",
+        "rule": "NULL FK pengguna",
+        "meaning": "Pejabat internal bila diketahui"
+      },
+      {
+        "name": "nama_snapshot",
+        "type": "varchar(150)",
+        "rule": "NOT NULL",
+        "meaning": "Nama saat tanda tangan"
+      },
+      {
+        "name": "nip_snapshot",
+        "type": "varchar(20)",
+        "rule": "NULL",
+        "meaning": "NIP historis"
+      },
+      {
+        "name": "jabatan_snapshot",
+        "type": "varchar(200)",
+        "rule": "NOT NULL",
+        "meaning": "Jabatan/atas nama"
+      },
+      {
+        "name": "pangkat_snapshot",
+        "type": "varchar(100)",
+        "rule": "NULL",
+        "meaning": "Pangkat saat penerbitan"
+      },
+      {
+        "name": "metode",
+        "type": "varchar(25)",
+        "rule": "NOT NULL",
+        "meaning": "simulasi, unggahan_manual, elektronik"
+      },
+      {
+        "name": "status",
+        "type": "varchar(20)",
+        "rule": "NOT NULL",
+        "meaning": "menunggu, berhasil, gagal"
+      },
+      {
+        "name": "ditandatangani_pada",
+        "type": "datetime",
+        "rule": "NULL",
+        "meaning": "Waktu keberhasilan"
+      },
+      {
+        "name": "referensi_penyedia",
+        "type": "varchar(200)",
+        "rule": "NULL",
+        "meaning": "ID transaksi provider TTE, bukan secret"
+      },
+      {
+        "name": "hash_dokumen_ditandatangani",
+        "type": "char(64)",
+        "rule": "NULL",
+        "meaning": "Hash hasil dokumen"
+      }
+    ],
+    "rules": "UNIQUE(versi_dokumen_id, urutan). Surat persetujuan elektronik mensyaratkan pengguna Kadis; metode simulasi tidak dianggap TTE sah. Unggahan manual menyimpan provenance, tidak otomatis terverifikasi. Beberapa tanda tangan dapat memiliki hash hasil antara; hash versi final menunjuk artefak setelah semua tanda tangan."
+  },
+  "riwayat_disposisi": {
+    "purpose": "Event proses berurutan, termasuk revisi berulang.",
+    "fields": [
+      {
+        "name": "riwayat_disposisi_id",
+        "type": "bigint",
+        "rule": "PK",
+        "meaning": "Identitas kejadian"
+      },
+      {
+        "name": "permohonan_id",
+        "type": "bigint",
+        "rule": "FK permohonan",
+        "meaning": "Pemilik alur"
+      },
+      {
+        "name": "aktor_id",
+        "type": "bigint",
+        "rule": "FK pengguna",
+        "meaning": "Pelaku nyata"
+      },
+      {
+        "name": "role_snapshot",
+        "type": "varchar(100)",
+        "rule": "NOT NULL",
+        "meaning": "Peran saat tindakan"
+      },
+      {
+        "name": "status_sebelum",
+        "type": "varchar(40)",
+        "rule": "NULL",
+        "meaning": "NULL pada penerimaan pertama"
+      },
+      {
+        "name": "status_sesudah",
+        "type": "varchar(40)",
+        "rule": "NOT NULL",
+        "meaning": "Tahap setelah tindakan"
+      },
+      {
+        "name": "aksi",
+        "type": "varchar(50)",
+        "rule": "NOT NULL",
+        "meaning": "Terima, kirim, setujui, revisi, rilis, bayar, tanda_tangan, serah, hapus, pulihkan"
+      },
+      {
+        "name": "draft_surat_id",
+        "type": "bigint",
+        "rule": "NULL FK draft_surat",
+        "meaning": "Versi yang ditinjau"
+      },
+      {
+        "name": "versi_dokumen_id",
+        "type": "bigint",
+        "rule": "NULL FK versi_dokumen",
+        "meaning": "Dokumen terkait jika ada"
+      },
+      {
+        "name": "catatan",
+        "type": "text",
+        "rule": "NULL",
+        "meaning": "Alasan keputusan"
+      },
+      {
+        "name": "terjadi_pada",
+        "type": "datetime",
+        "rule": "NOT NULL",
+        "meaning": "Waktu event"
+      }
+    ],
+    "rules": "Append-only. FK versi harus milik permohonan yang sama: validasi dalam transaksi. Indeks(permohonan_id, terjadi_pada, riwayat_disposisi_id). Waktu tahap dihitung antarevent transisi, bukan event simpan biasa. Revisi/penolakan wajib catatan."
+  },
+  "serah_terima": {
+    "purpose": "Satu penyelesaian penyerahan fisik per permohonan.",
+    "fields": [
+      {
+        "name": "serah_terima_id",
+        "type": "bigint",
+        "rule": "PK",
+        "meaning": "Identitas penyerahan"
+      },
+      {
+        "name": "permohonan_id",
+        "type": "bigint",
+        "rule": "FK permohonan UNIQUE",
+        "meaning": "Permohonan selesai"
+      },
+      {
+        "name": "nama_penerima",
+        "type": "varchar(150)",
+        "rule": "NOT NULL",
+        "meaning": "Pemohon atau perwakilan, bukan akun internal"
+      },
+      {
+        "name": "hubungan_penerima",
+        "type": "varchar(100)",
+        "rule": "NULL",
+        "meaning": "Keterangan perwakilan"
+      },
+      {
+        "name": "diserahkan_oleh",
+        "type": "bigint",
+        "rule": "FK pengguna",
+        "meaning": "Petugas loket"
+      },
+      {
+        "name": "diserahkan_pada",
+        "type": "datetime",
+        "rule": "NOT NULL",
+        "meaning": "Waktu selesai layanan"
+      },
+      {
+        "name": "kelengkapan_diperiksa",
+        "type": "boolean",
+        "rule": "NOT NULL TRUE",
+        "meaning": "Konfirmasi pemeriksaan fisik"
+      },
+      {
+        "name": "bukti_disk",
+        "type": "varchar(50)",
+        "rule": "NULL",
+        "meaning": "Penyimpanan tanda terima"
+      },
+      {
+        "name": "bukti_path",
+        "type": "varchar(500)",
+        "rule": "NULL",
+        "meaning": "Scan tanda terima/SKRD ditandatangani penerima"
+      },
+      {
+        "name": "bukti_sha256",
+        "type": "char(64)",
+        "rule": "NULL",
+        "meaning": "Hash bukti"
+      },
+      {
+        "name": "catatan",
+        "type": "text",
+        "rule": "NULL",
+        "meaning": "Keterangan"
+      }
+    ],
+    "rules": "Tanggal selesai layanan berasal dari diserahkan_pada; tidak diduplikasi sebagai tanggal yang dapat diedit sendiri. Bukti dapat diunggah setelah penyerahan dengan audit; konfirmasi penerimaan tetap wajib."
+  },
+  "serah_terima_dokumen": {
+    "purpose": "Versi tepat yang diserahkan, agar arsip tidak bergeser setelah revisi.",
+    "fields": [
+      {
+        "name": "serah_terima_id",
+        "type": "bigint",
+        "rule": "PK FK serah_terima",
+        "meaning": "Penyerahan"
+      },
+      {
+        "name": "versi_dokumen_id",
+        "type": "bigint",
+        "rule": "PK FK versi_dokumen",
+        "meaning": "Dokumen final yang diserahkan"
+      }
+    ],
+    "rules": "PK gabungan. Seluruh versi harus milik permohonan yang sama, final dan jenis bukan STS. Satu versi per jenis dalam satu penyerahan (validasi transaksi lintas tabel)."
+  },
+  "audit_aktivitas": {
+    "purpose": "Audit perubahan akun, tarif, berkas, keputusan dan data penting.",
+    "fields": [
+      {
+        "name": "audit_aktivitas_id",
+        "type": "bigint",
+        "rule": "PK",
+        "meaning": "Identitas event"
+      },
+      {
+        "name": "aktor_id",
+        "type": "bigint",
+        "rule": "FK pengguna",
+        "meaning": "Pelaku"
+      },
+      {
+        "name": "aksi",
+        "type": "varchar(50)",
+        "rule": "NOT NULL",
+        "meaning": "Tindakan"
+      },
+      {
+        "name": "jenis_objek",
+        "type": "varchar(100)",
+        "rule": "NOT NULL",
+        "meaning": "Nama objek dari whitelist"
+      },
+      {
+        "name": "objek_id",
+        "type": "bigint",
+        "rule": "NOT NULL REF",
+        "meaning": "Identitas historis, bukan FK polimorfik SQL"
+      },
+      {
+        "name": "sebelum",
+        "type": "json",
+        "rule": "NULL",
+        "meaning": "Nilai relevan sebelum perubahan"
+      },
+      {
+        "name": "sesudah",
+        "type": "json",
+        "rule": "NULL",
+        "meaning": "Nilai relevan sesudah perubahan"
+      },
+      {
+        "name": "alasan",
+        "type": "text",
+        "rule": "NULL",
+        "meaning": "Alasan"
+      },
+      {
+        "name": "terjadi_pada",
+        "type": "datetime",
+        "rule": "NOT NULL",
+        "meaning": "Waktu audit"
+      }
+    ],
+    "rules": "Append-only, indeks(jenis_objek, objek_id, terjadi_pada). Whitelist atribut: password, token, isi berkas KTP tidak boleh direkam. Tidak menggantikan FK tabel bisnis; objek historis tetap terbaca melalui snapshot."
+  },
+  "roles": {
+    "purpose": "Master role; pola akses Spatie dari rancangan sebelumnya.",
+    "fields": [
+      {
+        "name": "role_id",
+        "type": "bigint",
+        "rule": "PK",
+        "meaning": "Identitas role"
+      },
+      {
+        "name": "name",
+        "type": "varchar(100)",
+        "rule": "NOT NULL",
+        "meaning": "Nama peran"
+      },
+      {
+        "name": "guard_name",
+        "type": "varchar(50)",
+        "rule": "NOT NULL",
+        "meaning": "web"
+      }
+    ],
+    "rules": "UNIQUE(name, guard_name). Role operasional aktif pengguna dipilih dari penugasan yang sah; tidak bebas dipilih seperti demo."
+  },
+  "permissions": {
+    "purpose": "Master kemampuan.",
+    "fields": [
+      {
+        "name": "permission_id",
+        "type": "bigint",
+        "rule": "PK",
+        "meaning": "Identitas permission"
+      },
+      {
+        "name": "name",
+        "type": "varchar(150)",
+        "rule": "NOT NULL",
+        "meaning": "Kode kemampuan"
+      },
+      {
+        "name": "guard_name",
+        "type": "varchar(50)",
+        "rule": "NOT NULL",
+        "meaning": "web"
+      }
+    ],
+    "rules": "UNIQUE(name, guard_name)."
+  },
+  "model_has_roles": {
+    "purpose": "Penugasan role kepada model pengguna.",
+    "fields": [
+      {
+        "name": "role_id",
+        "type": "bigint",
+        "rule": "PK FK roles",
+        "meaning": "Role"
+      },
+      {
+        "name": "model_id",
+        "type": "bigint",
+        "rule": "PK REF pengguna",
+        "meaning": "ID akun"
+      },
+      {
+        "name": "model_type",
+        "type": "varchar(150)",
+        "rule": "PK",
+        "meaning": "Alias model pengguna"
+      }
+    ],
+    "rules": "PK gabungan tiga kolom; model_id adalah REF polimorfik, bukan FK SQL. Lingkup ini hanya mengizinkan model pengguna. Tanpa teams. Indeks(model_id, model_type)."
+  },
+  "role_has_permissions": {
+    "purpose": "Kemampuan yang dimiliki role.",
+    "fields": [
+      {
+        "name": "role_id",
+        "type": "bigint",
+        "rule": "PK FK roles",
+        "meaning": "Role"
+      },
+      {
+        "name": "permission_id",
+        "type": "bigint",
+        "rule": "PK FK permissions",
+        "meaning": "Permission"
+      }
+    ],
+    "rules": "PK gabungan. Kemampuan pemutus keringanan belum diberikan otomatis kepada role apa pun."
+  },
+  "model_has_permissions": {
+    "purpose": "Dukungan permission langsung pola package; tidak dipakai secara default.",
+    "fields": [
+      {
+        "name": "permission_id",
+        "type": "bigint",
+        "rule": "PK FK permissions",
+        "meaning": "Permission"
+      },
+      {
+        "name": "model_id",
+        "type": "bigint",
+        "rule": "PK REF pengguna",
+        "meaning": "ID akun"
+      },
+      {
+        "name": "model_type",
+        "type": "varchar(150)",
+        "rule": "PK",
+        "meaning": "Alias model pengguna"
+      }
+    ],
+    "rules": "PK gabungan tiga kolom; tanpa teams. Indeks(model_id, model_type). Kosongkan pada seed awal jika seluruh permission melalui role."
+  }
+}

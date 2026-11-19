@@ -1,0 +1,176 @@
+{
+  "generated_at": "2026-10-24T21:51:43.744559+07:00",
+  "archive": "C:\\Users\\draka\\Documents\\Codex\\2026-09-16\\so\\siap-wisata.zip",
+  "archive_sha256": "763a3e6f5598ff2ba1fed1dffd4de20e97aa8e96019622514d43c104be733b69",
+  "current_root": "C:\\Users\\draka\\Documents\\Codex\\2026-09-16\\so\\siap-wisata",
+  "scope": [
+    "app/**/*.php",
+    "resources/**/*.php,css,js",
+    "routes/**/*.php",
+    "public/css/**/*.css",
+    "public/js/**/*.js"
+  ],
+  "normalization": "UTF-8 BOM removed; CRLF/CR normalized to LF for textual diff only. SHA256 values refer to original bytes.",
+  "files": [
+    {
+      "file": "app/Http/Controllers/DemoController.php",
+      "status": "diubah",
+      "added": 55,
+      "removed": 8,
+      "before_sha256": "197db5b3b265d4849eec4cf94229a33291c67b9ab1a2b2554e2c8876962b05f7",
+      "after_sha256": "7ea073b46941d94dbe54d775d58ced9248c223f7004ed648a7c315865d8f6201"
+    },
+    {
+      "file": "app/Support/DemoData.php",
+      "status": "diubah",
+      "added": 42,
+      "removed": 1,
+      "before_sha256": "6cc7f99c20502a5118730993fc51318ee8f1ca1116166e2b464c45ab620ffd23",
+      "after_sha256": "45718fdbfd465f8493b2786cec45ff02442ed7ff716db2ec712d57e8939b6115"
+    },
+    {
+      "file": "app/Support/FinanceDocument.php",
+      "status": "baru",
+      "added": 43,
+      "removed": 0,
+      "before_sha256": null,
+      "after_sha256": "ba79fae665675a0fc77fe6a8542547f4df48ae06f8c2e7b32cc95a84cd0b4088"
+    },
+    {
+      "file": "public/css/siptr-blade.css",
+      "status": "diubah",
+      "added": 33,
+      "removed": 0,
+      "before_sha256": "50011ee2f2ab4846e94332e6996d5c4a8624c2993fc2544fa58c0d1ee65dc114",
+      "after_sha256": "f1cf76a31b5a888d086d70b4d3e99d38cbe07321221742b9245608e16e89657b"
+    },
+    {
+      "file": "public/js/app.js",
+      "status": "diubah",
+      "added": 53,
+      "removed": 1,
+      "before_sha256": "597f5af0e27a420cd53821196f0fc01404c763cf52e3174405801e81fd166080",
+      "after_sha256": "280f68e9896550f39902372a15cac1f48b76af51e82e222932094fc3c65ba2ce"
+    },
+    {
+      "file": "resources/views/arsip/index.blade.php",
+      "status": "baru",
+      "added": 15,
+      "removed": 0,
+      "before_sha256": null,
+      "after_sha256": "725e594470745201ba74cc83ac94d04640ff4565a64cd0d721773f88a6bbc649"
+    },
+    {
+      "file": "resources/views/dokumen/editor.blade.php",
+      "status": "diubah",
+      "added": 42,
+      "removed": 7,
+      "before_sha256": "c127b4e58777a7475c4da5a260ab999ed0fdb6e99c6a8e7019592ba0f743559d",
+      "after_sha256": "97edd6ee6a74be973cdb3a0aeab8e932c3b60422850ca52b17f32e3abe48600e"
+    },
+    {
+      "file": "resources/views/dokumen/financial.blade.php",
+      "status": "diubah",
+      "added": 53,
+      "removed": 18,
+      "before_sha256": "00866baf1d816b23e6d36130cacfa247884cee202fd4403812458894926337a5",
+      "after_sha256": "0199794577fe848a905f9b910598e2f720a3c3c635ceb303453e713e2d3ff70e"
+    },
+    {
+      "file": "resources/views/dokumen/letter.blade.php",
+      "status": "baru",
+      "added": 11,
+      "removed": 0,
+      "before_sha256": null,
+      "after_sha256": "307c33f19187a2d69de3a602d087962d80888ad54d7b0823d2d9131ba11ad900"
+    },
+    {
+      "file": "resources/views/dokumen/preview.blade.php",
+      "status": "diubah",
+      "added": 7,
+      "removed": 2,
+      "before_sha256": "2c7bf4139fee1b3653e63f1935380e31a2deca2ed5dd041865a90af8d2367808",
+      "after_sha256": "cfe596a827eab0362dee0f0778b0270761bbd7c3945bdc2e64fc0f9ab216c9de"
+    },
+    {
+      "file": "resources/views/dokumen/skrd.blade.php",
+      "status": "baru",
+      "added": 27,
+      "removed": 0,
+      "before_sha256": null,
+      "after_sha256": "e33c7361e3b54997fc8dfae83b884a31217b5270f31efbcb65e64f1e5fc1e1f3"
+    },
+    {
+      "file": "resources/views/kalender/index.blade.php",
+      "status": "diubah",
+      "added": 2,
+      "removed": 2,
+      "before_sha256": "f38b45d61cc11c3c4c4225a4fa3201d60097b3f1e2b57d6fc7571fa0a204f962",
+      "after_sha256": "0aba162b4f43f2f59f7678f78654cd1036f3d28a45d58ccca37654143ec97548"
+    },
+    {
+      "file": "resources/views/laporan/index.blade.php",
+      "status": "diubah",
+      "added": 1,
+      "removed": 0,
+      "before_sha256": "01faed38d0db7b60a31065da27c3fceeca6b01ee151f5b47638f98b9f6fcccf0",
+      "after_sha256": "2346827d1995e5839106f99ef6362b08cc169290aae4e33eb04bd8deb4218284"
+    },
+    {
+      "file": "resources/views/layouts/app.blade.php",
+      "status": "diubah",
+      "added": 1,
+      "removed": 1,
+      "before_sha256": "a3e63f004815a228d7459bc3d169c1c7394c69401f7e54ed642f9f17d0c77f40",
+      "after_sha256": "d338881d3583330253d5108ab5fd13a6374fbb5be026a1157592bc8dcacee54c"
+    },
+    {
+      "file": "resources/views/permohonan/action.blade.php",
+      "status": "diubah",
+      "added": 6,
+      "removed": 5,
+      "before_sha256": "c1253a2626cc98a5d483ed17b90ce1e5278219f6b1e2b8259617b7d332b2d517",
+      "after_sha256": "b5be4176d9c5aa7bba9d3b4c36f3315a0c8c9791ca258bf00ade3ba0e3df39a1"
+    },
+    {
+      "file": "resources/views/permohonan/filters.blade.php",
+      "status": "diubah",
+      "added": 2,
+      "removed": 1,
+      "before_sha256": "f5aa67f2c4ec47581de038baf1adc62ecc732f18f242a366081e5cab0ee6bc8d",
+      "after_sha256": "4e2301bf622e13177c68c08c5bacc20edc448e35f32ae6c04dda3b63d02faf03"
+    },
+    {
+      "file": "resources/views/permohonan/index.blade.php",
+      "status": "diubah",
+      "added": 5,
+      "removed": 1,
+      "before_sha256": "3a387b7e6b3891a79e947a491708b030c35d6c3cbbeabef1feac19f9be9a1145",
+      "after_sha256": "2d696c0ff204730a4ea9497e76a38e24ee1d33a3ac2b1ae4a9ff6f8c5bd4d0b3"
+    },
+    {
+      "file": "resources/views/permohonan/work.blade.php",
+      "status": "diubah",
+      "added": 5,
+      "removed": 3,
+      "before_sha256": "1ce55f60f0948546a06189c7064d7e99ad26bf84ea564b547909415b8f48da6e",
+      "after_sha256": "50e5324ed0e0d00788aa278d6cd0cfba68ff6fad2e1068da61b389006288c008"
+    },
+    {
+      "file": "resources/views/persuratan/draft/editor.blade.php",
+      "status": "baru",
+      "added": 8,
+      "removed": 0,
+      "before_sha256": null,
+      "after_sha256": "d2e25a0431818b588ce782830e35161a9a808ed6165997eb31e8973fe8b6ee5f"
+    },
+    {
+      "file": "resources/views/riwayat/index.blade.php",
+      "status": "baru",
+      "added": 8,
+      "removed": 0,
+      "before_sha256": null,
+      "after_sha256": "29771ed8183ea9f1abe39817838dce1380f2a7af85d66ec309a0a5335086c640"
+    }
+  ]
+}

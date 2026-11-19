@@ -1,0 +1,8 @@
+<section class="panel p-4 my-4"><h2 class="fs-6">Sumber surat persetujuan</h2>
+<dl class="detail-grid">@foreach(['event_name'=>'Nama acara','pic_position'=>'Jabatan PIC','request_number'=>'Nomor surat pemohon','request_date'=>'Tanggal surat pemohon','start_time'=>'Jam mulai','end_time'=>'Jam selesai'] as $key=>$label)<div><dt>{{ $label }}</dt><dd>{{ $r['letter_source'][$key]??'Belum diisi' }}</dd></div>@endforeach</dl>
+@if($role==='sekretariat'&&empty($r['deleted_at'])&&in_array($r['status'],['masuk','draft']))
+<details class="mt-3"><summary>Lengkapi / koreksi sumber surat</summary><form method="post" action="{{ route('letter.source',$r['id']) }}" class="mt-3">@csrf
+<label class="form-label" for="source-address">Alamat pemohon</label><textarea class="form-control mb-3" name="address" id="source-address" maxlength="1000" required>{{ old('address',$r['address']??'') }}</textarea><div class="row g-3">
+@foreach(['event_name'=>'Nama acara','pic_position'=>'Jabatan PIC','request_number'=>'Nomor surat pemohon','request_date'=>'Tanggal surat pemohon','start_time'=>'Jam mulai','end_time'=>'Jam selesai'] as $key=>$label)<div class="col-md-6"><label class="form-label" for="source-{{ $key }}">{{ $label }}</label><input class="form-control" id="source-{{ $key }}" name="letter_source[{{ $key }}]" type="{{ $key==='request_date'?'date':(str_ends_with($key,'time')?'time':'text') }}" maxlength="200" value="{{ old('letter_source.'.$key,$r['letter_source'][$key]??'') }}"></div>@endforeach</div>
+<label class="form-label mt-3" for="source-note">Alasan koreksi</label><input class="form-control mb-3" id="source-note" name="note" minlength="5" maxlength="1000" required>
+<button class="btn btn-primary">Simpan sumber surat</button></form></details>@endif</section>

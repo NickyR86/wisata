@@ -1,0 +1,28 @@
+
+<section class="panel action-panel p-4 mb-4"><div class="panel-title"><div><h2 class="mt-2">{{ $statuses[$r['status']] }}</h2></div><x-icon name="edit"/></div>
+<form method="post" action="{{ route('demo.act',$r['id']) }}">@csrf
+@if(isset($r['_v']))<input type="hidden" name="record_version" value="{{ $r['_v'] }}">@endif
+
+@if($r['status']==='masuk')<p class="text-secondary">Tinjau kelengkapan dan keabsahan berkas sebelum diteruskan ke Petugas Layanan.</p><label class="form-label" for="note">Catatan pemeriksaan <small>(wajib untuk penolakan)</small></label><textarea class="form-control mb-3" name="note" id="note" rows="3" maxlength="2000"></textarea><div class="action-buttons"><button class="btn btn-outline-danger" name="action" value="reject" data-note-required>Tolak permohonan</button><button class="btn btn-primary" name="action" value="approve">Setujui & teruskan <x-icon name="arrow" size="16"/></button></div>
+@elseif($r['status']==='draft')
+@include('persuratan.draft.editor')
+@elseif(in_array($r['status'],['review_draft','verifikasi']))@include('dokumen.letter')<label for="note" class="form-label">Catatan <small>(wajib jika dikembalikan)</small></label><textarea name="note" id="note" class="form-control mb-3" rows="3" maxlength="2000"></textarea><div class="action-buttons"><button class="btn btn-outline-primary" name="action" value="revise" data-note-required>Kembalikan untuk revisi</button><button class="btn btn-primary" name="action" value="approve">{{ $r['status']==='verifikasi'?'Verifikasi draft':'Setujui draft' }} <x-icon name="check" size="16"/></button></div>
+@elseif($r['status']==='rilis')@include('dokumen.letter')<p class="text-secondary">Rilis meneruskan surat ke penetapan retribusi. Surat belum ditandatangani dan belum menjadi izin final.</p><button name="action" value="release" class="btn btn-primary">Rilis ke Bendahara <x-icon name="arrow" size="16"/></button>
+@elseif($r['status']==='tagihan')
+@php($assessment=\App\Support\FinanceDocument::assessment($r))
+<div data-assessment data-days="{{ $r['days'] }}" data-percent="{{ $assessment['percent'] }}">
+<div class="summary-line"><span>Tarif × {{ $r['days'] }} hari</span><strong data-assessment-subtotal>{{ $D::rupiah($assessment['subtotal']) }}</strong></div>
+<div class="summary-line"><span>Keringanan disetujui ({{ $assessment['percent'] }}%)</span><strong data-assessment-discount>{{ $D::rupiah($assessment['subtotal']-$assessment['total']) }}</strong></div>
+<div class="total-line"><span>Total penetapan</span><strong data-assessment-total>{{ $D::rupiah($assessment['total']) }}</strong></div>
+@if($r['discount']==='diajukan')<div class="alert alert-warning">Penetapan dapat disimpan. Penerbitan menunggu keputusan keringanan.</div>@endif
+<label class="form-label" for="assessment-rate">Tarif per hari untuk penetapan (Rp)</label><input id="assessment-rate" class="form-control mb-2" type="number" name="rate" min="0" max="100000000" step="0.01" value="{{ old('rate',$assessment['rate']) }}" required>
+<label class="form-label" for="assessment-reason">Dasar tarif / alasan penyesuaian</label><input id="assessment-reason" class="form-control mb-3" name="rate_reason" maxlength="500" value="{{ old('rate_reason',$assessment['note']) }}" required>
+<p class="small text-secondary">Simpan penetapan untuk memperbarui nominal draft SKRD. Setelah SKRD diterbitkan, nominal dikunci.</p>
+<button class="btn btn-outline-primary" name="action" value="save_assessment">Simpan penetapan</button>
+<button class="btn btn-primary" name="action" value="invoice" @disabled($r['discount']==='diajukan')>Terbitkan SKRD</button>
+</div>
+@elseif($r['status']==='bayar')<div class="total-line"><span>Tagihan ditetapkan</span><strong>{{ $D::rupiah($r['bill']['total']) }}</strong></div><label class="form-label" for="paymentDate">Tanggal Pembayaran</label><input type="date" class="form-control mb-3" name="payment_date" id="paymentDate" value="{{ date('Y-m-d') }}" max="{{ date('Y-m-d') }}" required><div class="form-check mb-3"><input class="form-check-input" type="checkbox" id="paymentChecked" name="payment_checked" value="1" required><label class="form-check-label" for="paymentChecked">Simulasikan bukti pembayaran sudah diperiksa dan setoran sudah dicatat.</label></div><p class="small text-secondary">Membuat contoh STBP dan STS pada sesi demo, tanpa transaksi uang atau pengiriman tagihan.</p><button class="btn btn-primary" name="action" value="pay">Konfirmasi Pembayaran</button>
+@elseif($r['status']==='ttd')@include('dokumen.letter')<div class="form-check mb-3"><input class="form-check-input" type="checkbox" id="signConfirmed" name="confirmed" value="1" required><label class="form-check-label" for="signConfirmed">Saya memahami ini simulasi persetujuan, bukan tanda tangan elektronik tersertifikasi.</label></div><button class="btn btn-primary" name="action" value="sign">Tanda Tangani <x-icon name="edit" size="16"/></button>
+@elseif($r['status']==='serah')<p>Diserahkan kepada pemohon: <strong>Surat Persetujuan, SKRD, dan STBP</strong>. STS tetap sebagai dokumen internal dinas.</p><label for="recipient" class="form-label">Nama penerima berkas</label><input class="form-control mb-3" id="recipient" name="recipient" maxlength="100" required placeholder="Nama penerima contoh"><div class="form-check mb-3"><input class="form-check-input" id="handoverConfirmed" type="checkbox" name="confirmed" value="1" required><label for="handoverConfirmed" class="form-check-label">Simulasikan pemeriksaan kelengkapan dan penyerahan dokumen fisik telah selesai.</label></div><button class="btn btn-primary" name="action" value="handover">Konfirmasi Serah Terima <x-icon name="check" size="16"/></button>
+@endif
+</form></section>

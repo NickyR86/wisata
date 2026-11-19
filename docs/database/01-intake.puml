@@ -1,0 +1,117 @@
+@startuml
+!pragma layout smetana
+hide circle
+hide methods
+skinparam linetype ortho
+skinparam shadowing false
+skinparam nodesep 65
+skinparam ranksep 70
+title SIAP-Wisata revisi 1 - 01-intake
+entity "pengguna" as pengguna {
+  {field} pengguna_id : bigint [PK]
+  {field} nama : varchar(150) [NOT NULL]
+  {field} nip : varchar(20) [NULL UNIQUE]
+  {field} username : varchar(100) [NOT NULL UNIQUE]
+  {field} email : varchar(150) [NULL UNIQUE]
+  {field} password : varchar(255) [NOT NULL]
+  {field} unit_kerja : varchar(150) [NULL]
+  {field} status_akun : varchar(20) [NOT NULL]
+}
+entity "lokasi" as lokasi {
+  {field} lokasi_id : bigint [PK]
+  {field} nama_lokasi : varchar(150) [NOT NULL]
+  {field} status_aktif : boolean [NOT NULL]
+  {field} dikelola_dispar : boolean [NOT NULL]
+}
+entity "jenis_kegiatan" as jenis_kegiatan {
+  {field} jenis_kegiatan_id : bigint [PK]
+  {field} nama : varchar(150) [NOT NULL UNIQUE]
+  {field} aktif : boolean [NOT NULL]
+}
+entity "tarif_retribusi" as tarif_retribusi {
+  {field} tarif_retribusi_id : bigint [PK]
+  {field} lokasi_id : bigint [FK lokasi]
+  {field} jenis_kegiatan_id : bigint [FK jenis_kegiatan]
+  {field} tarif : decimal(18,2) [NOT NULL >=0]
+  {field} satuan : varchar(20) [NOT NULL]
+  {field} berlaku_mulai : date [NOT NULL]
+  {field} berlaku_sampai : date [NULL]
+  {field} ditetapkan_oleh : bigint [FK pengguna]
+}
+entity "permohonan" as permohonan {
+  {field} permohonan_id : bigint [PK]
+  {field} nomor_tracking : varchar(50) [NOT NULL UNIQUE]
+  {field} nama_pemohon : varchar(150) [NOT NULL]
+  {field} penanggung_jawab : varchar(150) [NOT NULL]
+  {field} kontak_pemohon : varchar(30) [NOT NULL]
+  {field} email_pemohon : varchar(150) [NULL]
+  {field} alamat_pemohon : text [NOT NULL]
+  {field} lokasi_id : bigint [FK lokasi]
+  {field} jenis_kegiatan_id : bigint [FK jenis_kegiatan]
+  {field} tanggal_kegiatan : date [NOT NULL]
+  {field} jumlah_hari : integer [NOT NULL >0]
+  {field} diterima_pada : datetime [NOT NULL]
+  {field} status : varchar(40) [NOT NULL]
+  {field} diinput_oleh : bigint [FK pengguna]
+  {field} jenis_keringanan : varchar(20) [NOT NULL]
+  {field} status_keringanan : varchar(20) [NOT NULL]
+  {field} kategori_keringanan : varchar(100) [NULL]
+  {field} alasan_keringanan : text [NULL]
+  {field} persentase_disetujui : decimal(5,2) [NOT NULL DEFAULT 0]
+  {field} catatan_keputusan_keringanan : text [NULL]
+  {field} keringanan_diputuskan_oleh : bigint [NULL FK pengguna]
+  {field} keringanan_diputuskan_pada : datetime [NULL]
+  {field} deleted_at : datetime [NULL]
+  {field} deleted_by : bigint [NULL FK pengguna]
+  {field} alasan_hapus : text [NULL]
+}
+entity "jenis_persyaratan" as jenis_persyaratan {
+  {field} jenis_persyaratan_id : bigint [PK]
+  {field} kode : varchar(50) [NOT NULL UNIQUE]
+  {field} nama : varchar(150) [NOT NULL]
+  {field} kondisi_wajib : varchar(40) [NOT NULL]
+  {field} aktif : boolean [NOT NULL]
+}
+entity "persyaratan_permohonan" as persyaratan_permohonan {
+  {field} persyaratan_permohonan_id : bigint [PK]
+  {field} permohonan_id : bigint [FK permohonan]
+  {field} jenis_persyaratan_id : bigint [FK jenis_persyaratan]
+  {field} nama_snapshot : varchar(150) [NOT NULL]
+  {field} wajib : boolean [NOT NULL]
+  {field} alasan_penerapan : text [NULL]
+}
+entity "dokumen_persyaratan" as dokumen_persyaratan {
+  {field} dokumen_persyaratan_id : bigint [PK]
+  {field} persyaratan_permohonan_id : bigint [FK persyaratan_permohonan]
+  {field} versi : integer [NOT NULL >0]
+  {field} nama_asli : varchar(255) [NOT NULL]
+  {field} disk : varchar(50) [NOT NULL]
+  {field} file_path : varchar(500) [NOT NULL]
+  {field} mime_type : varchar(100) [NOT NULL]
+  {field} ukuran_byte : bigint [NOT NULL >=0]
+  {field} sha256 : char(64) [NOT NULL]
+  {field} diunggah_oleh : bigint [FK pengguna]
+  {field} diunggah_pada : datetime [NOT NULL]
+  {field} status_verifikasi : varchar(20) [NOT NULL]
+  {field} diverifikasi_oleh : bigint [NULL FK pengguna]
+  {field} diverifikasi_pada : datetime [NULL]
+  {field} catatan_verifikasi : text [NULL]
+}
+lokasi ||--o{ tarif_retribusi : lokasi_id
+jenis_kegiatan ||--o{ tarif_retribusi : jenis_kegiatan_id
+pengguna ||--o{ tarif_retribusi : ditetapkan_oleh
+lokasi ||--o{ permohonan : lokasi_id
+jenis_kegiatan ||--o{ permohonan : jenis_kegiatan_id
+pengguna ||--o{ permohonan : diinput_oleh
+pengguna |o--o{ permohonan : keringanan_diputuskan_oleh
+pengguna |o--o{ permohonan : deleted_by
+permohonan ||--o{ persyaratan_permohonan : permohonan_id
+jenis_persyaratan ||--o{ persyaratan_permohonan : jenis_persyaratan_id
+persyaratan_permohonan ||--o{ dokumen_persyaratan : persyaratan_permohonan_id
+pengguna ||--o{ dokumen_persyaratan : diunggah_oleh
+pengguna |o--o{ dokumen_persyaratan : diverifikasi_oleh
+legend bottom
+PK/FK/NULL/UQ sesuai kamus data; tabel berulang adalah tabel yang sama.
+REF putus-putus bukan FK SQL. Constraint lintas tabel: KEPUTUSAN-DAN-ALUR.md.
+endlegend
+@enduml

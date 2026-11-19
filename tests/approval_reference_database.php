@@ -1,0 +1,34 @@
+<?php
+require __DIR__.'/../vendor/autoload.php';
+$app=require __DIR__.'/../bootstrap/app.php';$app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Artisan;
+use App\Support\DemoData as D;
+use App\Services\BusinessStore;
+config(['database.default'=>'sqlite','database.connections.sqlite'=>['driver'=>'sqlite','database'=>':memory:','prefix'=>'','foreign_key_constraints'=>true],'siap.database_business'=>true]);
+DB::purge('sqlite');
+// MySQL CHECK statements are omitted only in this isolated SQLite test.
+$schema=file_get_contents(__DIR__.'/../database/migrations/2026_11_05_000001_create_siap_wisata_revision_one.php');
+$schema=preg_replace('/^\s*DB::statement\(.*\);\s*$/m','',$schema);
+$schema=preg_replace('/^<\?php/','',$schema);
+$m=eval($schema);$m->up();
+foreach(['2026_11_06_000001_support_business_persistence.php','2026_11_15_000001_add_structured_approval_letter.php'] as $file)(require __DIR__.'/../database/migrations/'.$file)->up();
+Artisan::call('siap:siapkan-demo-db');
+$actor=(int)DB::table('pengguna')->where('username','demo.petugas')->value('pengguna_id');
+$store=app(BusinessStore::class);
+$r=D::requests()[0];$r['location_id']=1;$r['draft']='';unset($r['letter']);
+$r['letter_source']=['event_name'=>'Reuni persistensi','pic_position'=>'Ketua','request_number'=>'TEST/1','request_date'=>'2026-11-01','start_time'=>'09:00','end_time'=>'16:00'];
+$r=$store->create($r,$actor);
+if($r['letter_source']['event_name']!=='Reuni persistensi')throw new RuntimeException('source persistence');
+$r['status']='draft';$r['letter']=D::letter($r);$r['letter']['structure']['copies']=['Tembusan uji'];$r['draft']='Draft persistensi';$store->save($r,$actor);
+$r=$store->find($r['id']);
+if($r['letter']['structure']['copies']!==['Tembusan uji'])throw new RuntimeException('structure persistence');
+$original=$r['letter']['structure']['source'];
+$r['letter_source']['event_name']='Reuni dikoreksi';$store->save($r,$actor);$r=$store->find($r['id']);
+if($r['letter']['structure']['source']!==$original)throw new RuntimeException('snapshot changed silently');
+$r['letter']['structure']['source']=App\Support\ApprovalLetter::source($r);$r['status']='review_draft';$store->save($r,$actor);$r=$store->find($r['id']);
+if($r['letter']['structure']['source']['kegiatan']!=='Reuni dikoreksi')throw new RuntimeException('explicit source sync');
+$versions=DB::table('draft_surat')->where('permohonan_id',$r['id'])->orderBy('versi')->get();
+if(count($versions)<2)throw new RuntimeException('draft version missing');
+if(json_decode($versions[0]->struktur_surat,true)['source']['kegiatan']!=='Reuni persistensi')throw new RuntimeException('old version modified');
+echo "PASS: SQLite source, structured draft persistence, explicit sync and immutable prior version.\n";

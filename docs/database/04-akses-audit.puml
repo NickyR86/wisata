@@ -1,0 +1,66 @@
+@startuml
+!pragma layout smetana
+hide circle
+hide methods
+skinparam linetype ortho
+skinparam shadowing false
+skinparam nodesep 65
+skinparam ranksep 70
+title SIAP-Wisata revisi 1 - 04-akses-audit
+entity "pengguna" as pengguna {
+  {field} pengguna_id : bigint [PK]
+  {field} nama : varchar(150) [NOT NULL]
+  {field} nip : varchar(20) [NULL UNIQUE]
+  {field} username : varchar(100) [NOT NULL UNIQUE]
+  {field} email : varchar(150) [NULL UNIQUE]
+  {field} password : varchar(255) [NOT NULL]
+  {field} unit_kerja : varchar(150) [NULL]
+  {field} status_akun : varchar(20) [NOT NULL]
+}
+entity "roles" as roles {
+  {field} role_id : bigint [PK]
+  {field} name : varchar(100) [NOT NULL]
+  {field} guard_name : varchar(50) [NOT NULL]
+}
+entity "permissions" as permissions {
+  {field} permission_id : bigint [PK]
+  {field} name : varchar(150) [NOT NULL]
+  {field} guard_name : varchar(50) [NOT NULL]
+}
+entity "model_has_roles" as model_has_roles {
+  {field} role_id : bigint [PK FK roles]
+  {field} model_id : bigint [PK REF pengguna]
+  {field} model_type : varchar(150) [PK]
+}
+entity "role_has_permissions" as role_has_permissions {
+  {field} role_id : bigint [PK FK roles]
+  {field} permission_id : bigint [PK FK permissions]
+}
+entity "model_has_permissions" as model_has_permissions {
+  {field} permission_id : bigint [PK FK permissions]
+  {field} model_id : bigint [PK REF pengguna]
+  {field} model_type : varchar(150) [PK]
+}
+entity "audit_aktivitas" as audit_aktivitas {
+  {field} audit_aktivitas_id : bigint [PK]
+  {field} aktor_id : bigint [FK pengguna]
+  {field} aksi : varchar(50) [NOT NULL]
+  {field} jenis_objek : varchar(100) [NOT NULL]
+  {field} objek_id : bigint [NOT NULL REF]
+  {field} sebelum : json [NULL]
+  {field} sesudah : json [NULL]
+  {field} alasan : text [NULL]
+  {field} terjadi_pada : datetime [NOT NULL]
+}
+roles ||--o{ model_has_roles : role_id
+pengguna ||..o{ model_has_roles : model_id
+roles ||--o{ role_has_permissions : role_id
+permissions ||--o{ role_has_permissions : permission_id
+permissions ||--o{ model_has_permissions : permission_id
+pengguna ||..o{ model_has_permissions : model_id
+pengguna ||--o{ audit_aktivitas : aktor_id
+legend bottom
+PK/FK/NULL/UQ sesuai kamus data; tabel berulang adalah tabel yang sama.
+REF putus-putus bukan FK SQL. Constraint lintas tabel: KEPUTUSAN-DAN-ALUR.md.
+endlegend
+@enduml

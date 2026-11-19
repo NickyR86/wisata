@@ -1,0 +1,33 @@
+<?php
+require __DIR__.'/../vendor/autoload.php';
+$app=require __DIR__.'/../bootstrap/app.php';$app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Artisan;
+use App\Support\DemoData as D;
+use App\Services\BusinessStore;
+config(['database.default'=>'sqlite','database.connections.sqlite'=>['driver'=>'sqlite','database'=>':memory:','prefix'=>'','foreign_key_constraints'=>true],'siap.database_business'=>true]);
+DB::purge('sqlite');
+// MySQL CHECK statements are omitted only in this isolated SQLite test.
+$schema=file_get_contents(__DIR__.'/../database/migrations/2026_11_05_000001_create_siap_wisata_revision_one.php');
+$schema=preg_replace('/^\s*DB::statement\(.*\);\s*$/m','',$schema);
+$schema=preg_replace('/^<\?php/','',$schema);
+$m=eval($schema);$m->up();
+foreach(['2026_11_06_000001_support_business_persistence.php','2026_11_15_000001_add_structured_approval_letter.php'] as $file)(require __DIR__.'/../database/migrations/'.$file)->up();
+Artisan::call('siap:siapkan-demo-db');
+$actor=(int)DB::table('pengguna')->where('username','demo.bendahara')->value('pengguna_id');
+$store=app(BusinessStore::class);
+$r=D::requests()[0];$r['location_id']=1;$r['bill']=null;$r['payment']=null;$r['documents']=[];$r['signed']=false;$r['templates']=[];
+$r['discount']='disetujui';$r['discount_percent']=25;$r['days']=2;
+$r=$store->create($r,$actor);$r['status']='tagihan';
+$r['templates']['skrd']=['assessment'=>['rate'=>800000,'note'=>'Penyesuaian uji'], 'rows'=>[['code'=>'4.1','label'=>'Uraian lama','amount'=>3000000]]];
+$store->save($r,$actor);$r=$store->find($r['id']);
+$f=App\Support\FinanceDocument::data($r,'skrd',true);
+if($f['base']!=1600000||$f['total']!=1200000||$f['rows'][0]['amount']!=1600000)throw new RuntimeException('Draft reload/relief/legacy row mismatch');
+if(DB::table('tagihan_retribusi')->count()!==0)throw new RuntimeException('Draft issued an invoice');
+$r['bill']=App\Support\FinanceDocument::assessment($r);App\Support\FinanceDocument::freezeSkrd($r,'Penerbitan uji');$r['documents']=['SKRD'];$r['status']='bayar';
+$store->save($r,$actor);$r=$store->find($r['id']);
+$f=App\Support\FinanceDocument::data($r,'skrd');
+if($r['bill']['total']!=1200000||$f['total']!=1200000)throw new RuntimeException('Issued mismatch');
+$r['templates']['skrd']['assessment']['rate']=1;
+if(App\Support\FinanceDocument::data($r,'skrd',true)['total']!=1200000)throw new RuntimeException('Issued bill overridden by draft');
+echo "PASS: database draft persistence, relief, legacy row, issuance and frozen amounts.\n";
