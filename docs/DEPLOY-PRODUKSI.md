@@ -16,7 +16,7 @@ Semua langkah **belum diuji di server nyata** oleh penyusunnya; jalankan di ling
 4. Pastikan `.env` berisi `APP_ENV=production`, `APP_DEBUG=false`, `SIAP_DATABASE_ACCOUNTS=true`, `SIAP_DATABASE_BUSINESS=true`, `SESSION_SECURE_COOKIE=true`.
 5. Buat database dan **pengguna database khusus aplikasi** (bukan `root`) dengan hak SELECT, INSERT, UPDATE, DELETE, serta CREATE/ALTER/INDEX/REFERENCES hanya saat migrasi.
 6. `php artisan migrate --force`
-7. `php artisan siap:siapkan-demo-db` hanya bila Anda memerlukan master awal (lokasi, tarif, jenis kegiatan); perintah ini tidak mereset permohonan. Jangan jalankan di produksi bila master sudah diisi.
+7. **Data master awal (lokasi, tarif, jenis kegiatan, jenis persyaratan) belum punya jalur resmi di produksi.** Perintah `siap:siapkan-demo-db` sengaja menolak berjalan di luar `local/testing`, dan migrasi tidak mengisi data. Lokasi tambahan dapat dibuat dengan `php artisan siap:tambah-lokasi-wisata`, tetapi jenis kegiatan, persyaratan, dan tarif harus diisi lewat SQL/seeder yang disusun dari data resmi dinas (angka tarif di data contoh hanya contoh). Tanpa data ini form Permohonan Baru tidak dapat dipakai. Ini dicatat sebagai pekerjaan Tahap berikutnya.
 8. `php artisan siap:buat-admin` untuk membuat administrator awal. Perintah ini tidak menampilkan kata sandi; simpan kata sandi di pengelola kata sandi.
 9. `php artisan config:cache && php artisan route:cache && php artisan view:cache`
 
