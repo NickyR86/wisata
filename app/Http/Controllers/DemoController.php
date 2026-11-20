@@ -160,7 +160,7 @@ class DemoController extends Controller
         $requirements=\App\Support\PermitRequirements::forLocation($loc);
         if($q->discount==='25'&&!$loc['managed']) return back()->withErrors(['discount'=>'Keringanan 25% hanya dapat diajukan untuk lokasi yang dikelola Dispar.'])->withInput();
         try {
-        if(!$q->boolean('files')) {
+        if(!($q->boolean('files')&&app()->environment('local','testing'))) {
             $rules=[]; foreach($requirements as $i=>$label) $rules['requirements.'.$i]='required|file|mimes:pdf,jpg,jpeg,png|max:2048';
             $q->validate($rules);
             foreach($requirements as $i=>$label) {
