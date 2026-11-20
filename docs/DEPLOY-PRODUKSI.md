@@ -16,9 +16,10 @@ Semua langkah **belum diuji di server nyata** oleh penyusunnya; jalankan di ling
 4. Pastikan `.env` berisi `APP_ENV=production`, `APP_DEBUG=false`, `SIAP_DATABASE_ACCOUNTS=true`, `SIAP_DATABASE_BUSINESS=true`, `SESSION_SECURE_COOKIE=true`.
 5. Buat database dan **pengguna database khusus aplikasi** (bukan `root`) dengan hak SELECT, INSERT, UPDATE, DELETE, serta CREATE/ALTER/INDEX/REFERENCES hanya saat migrasi.
 6. `php artisan migrate --force`
-7. **Data master awal (lokasi, tarif, jenis kegiatan, jenis persyaratan) belum punya jalur resmi di produksi.** Perintah `siap:siapkan-demo-db` sengaja menolak berjalan di luar `local/testing`, dan migrasi tidak mengisi data. Lokasi tambahan dapat dibuat dengan `php artisan siap:tambah-lokasi-wisata`, tetapi jenis kegiatan, persyaratan, dan tarif harus diisi lewat SQL/seeder yang disusun dari data resmi dinas (angka tarif di data contoh hanya contoh). Tanpa data ini form Permohonan Baru tidak dapat dipakai. Ini dicatat sebagai pekerjaan Tahap berikutnya.
+7. Migrasi Tahap 3 sudah mengisi katalog dasar persyaratan (REQ-1 sampai REQ-4) dan menambahkan kolom penanda rekomendasi DLH. Jenis kegiatan, lokasi, dan tarif **tidak** diisi otomatis; isi lewat menu Data Master setelah login admin (langkah 9).
 8. `php artisan siap:buat-admin` untuk membuat administrator awal. Perintah ini tidak menampilkan kata sandi; simpan kata sandi di pengelola kata sandi.
-9. `php artisan config:cache && php artisan route:cache && php artisan view:cache`
+9. Login sebagai admin, buka **Data Master**: tambahkan jenis kegiatan lebih dulu, lalu lokasi beserta tarif per hari dari data resmi dinas. Lokasi dan kegiatan itu langsung tampil di formulir Permohonan Baru.
+10. `php artisan config:cache && php artisan route:cache && php artisan view:cache`
 
 ## 3. Web server
 - **Document root harus `public/`.** Jangan arahkan ke root proyek.

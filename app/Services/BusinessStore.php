@@ -14,7 +14,7 @@ class BusinessStore
  public function locations(): array {
   return DB::table('lokasi')->orderBy('lokasi_id')->get()->map(function($l){
    $rate=DB::table('tarif_retribusi')->where('lokasi_id',$l->lokasi_id)->where('berlaku_mulai','<=',date('Y-m-d'))->where(fn($q)=>$q->whereNull('berlaku_sampai')->orWhere('berlaku_sampai','>=',date('Y-m-d')))->orderByDesc('berlaku_mulai')->value('tarif');
-   return ['id'=>(int)$l->lokasi_id,'name'=>$l->nama_lokasi,'area'=>'Pangkalpinang','rate'=>(float)($rate??0),'managed'=>(bool)$l->dikelola_dispar,'active'=>(bool)$l->status_aktif];
+   return ['id'=>(int)$l->lokasi_id,'name'=>$l->nama_lokasi,'area'=>'Pangkalpinang','rate'=>(float)($rate??0),'managed'=>(bool)$l->dikelola_dispar,'active'=>(bool)$l->status_aktif,'dlh'=>(bool)($l->butuh_rekomendasi_dlh??false)];
   })->all();
  }
  public function tariff(int $location,string $activity,string $date): ?object {
@@ -217,6 +217,66 @@ class BusinessStore
     $q->clone()->whereNull('berlaku_sampai')->update(['berlaku_sampai'=>date('Y-m-d',strtotime('-1 day')),'updated_at'=>now()]);
     DB::table('tarif_retribusi')->insert($this->stamp(['lokasi_id'=>$id,'jenis_kegiatan_id'=>$kind->jenis_kegiatan_id,'tarif'=>$amount,'satuan'=>'hari','berlaku_mulai'=>date('Y-m-d'),'ditetapkan_oleh'=>$actor]));
    }
+   $this->audit($actor,'tarif_diubah','lokasi',$id,null,['tarif_per_hari'=>$amount]);
+  });
+ }
+ private function audit(int $actor,string $action,string $type,int $id,?array $before,?array $after,?string $reason=null): void {
+  DB::table('audit_aktivitas')->insert(['aktor_id'=>$actor,'aksi'=>$action,'jenis_objek'=>$type,'objek_id'=>$id,'sebelum'=>$before===null?null:json_encode($before),'sesudah'=>$after===null?null:json_encode($after),'alasan'=>$reason,'terjadi_pada'=>now()]);
+ }
+ private function sameName(string $a,string $b): bool { $n=fn($v)=>mb_strtolower(preg_replace('/\s+/u',' ',trim($v))); return $n($a)===$n($b); }
+ public function activities(bool $onlyActive=true): array {
+  $q=DB::table('jenis_kegiatan')->orderBy('nama'); if($onlyActive)$q->where('aktif',true);
+  return $q->get()->map(fn($k)=>['id'=>(int)$k->jenis_kegiatan_id,'name'=>$k->nama,'active'=>(bool)$k->aktif])->all();
+ }
+ public function createLocation(array $d,int $actor): int {
+  return DB::transaction(function()use($d,$actor){
+   $name=trim($d['name']);
+   abort_if(DB::table('jenis_kegiatan')->where('aktif',true)->doesntExist(),422,'Tambahkan minimal satu jenis kegiatan aktif lebih dulu agar tarif lokasi dapat disimpan.');
+   abort_if(DB::table('lokasi')->pluck('nama_lokasi')->contains(fn($n)=>$this->sameName($n,$name)),422,'Nama lokasi sudah ada.');
+   $id=(int)DB::table('lokasi')->insertGetId($this->stamp(['nama_lokasi'=>$name,'status_aktif'=>true,'dikelola_dispar'=>(bool)$d['managed'],'butuh_rekomendasi_dlh'=>(bool)$d['dlh']]),'lokasi_id');
+   $this->updateRate($id,(int)$d['rate'],$actor);
+   $this->audit($actor,'lokasi_dibuat','lokasi',$id,null,['nama'=>$name,'dikelola_dispar'=>(bool)$d['managed'],'butuh_rekomendasi_dlh'=>(bool)$d['dlh'],'tarif_per_hari'=>(int)$d['rate']]);
+   return $id;
+  });
+ }
+ public function updateLocation(int $id,array $d,int $actor): void {
+  DB::transaction(function()use($id,$d,$actor){
+   $old=DB::table('lokasi')->where('lokasi_id',$id)->lockForUpdate()->first(); abort_unless($old,404);
+   $name=trim($d['name']);
+   abort_if(DB::table('lokasi')->where('lokasi_id','!=',$id)->pluck('nama_lokasi')->contains(fn($n)=>$this->sameName($n,$name)),422,'Nama lokasi sudah dipakai lokasi lain.');
+   $new=['nama_lokasi'=>$name,'status_aktif'=>(bool)$d['active'],'dikelola_dispar'=>(bool)$d['managed'],'butuh_rekomendasi_dlh'=>(bool)$d['dlh']];
+   DB::table('lokasi')->where('lokasi_id',$id)->update($new+['updated_at'=>now()]);
+   $this->audit($actor,'lokasi_diubah','lokasi',$id,['nama'=>$old->nama_lokasi,'aktif'=>(bool)$old->status_aktif,'dikelola_dispar'=>(bool)$old->dikelola_dispar,'butuh_rekomendasi_dlh'=>(bool)($old->butuh_rekomendasi_dlh??false)],['nama'=>$name,'aktif'=>(bool)$d['active'],'dikelola_dispar'=>(bool)$d['managed'],'butuh_rekomendasi_dlh'=>(bool)$d['dlh']]);
+  });
+ }
+ public function deleteLocation(int $id,int $actor): void {
+  DB::transaction(function()use($id,$actor){
+   $old=DB::table('lokasi')->where('lokasi_id',$id)->lockForUpdate()->first(); abort_unless($old,404);
+   abort_if(DB::table('permohonan')->where('lokasi_id',$id)->exists(),422,'Lokasi sudah dipakai permohonan dan tidak dapat dihapus. Nonaktifkan saja agar tidak muncul di formulir.');
+   abort_if(DB::table('rincian_tagihan_retribusi as r')->join('tarif_retribusi as t','t.tarif_retribusi_id','=','r.tarif_retribusi_id')->where('t.lokasi_id',$id)->exists(),422,'Tarif lokasi sudah dirujuk tagihan dan tidak dapat dihapus. Nonaktifkan saja.');
+   DB::table('tarif_retribusi')->where('lokasi_id',$id)->delete();
+   DB::table('lokasi')->where('lokasi_id',$id)->delete();
+   $this->audit($actor,'lokasi_dihapus','lokasi',$id,['nama'=>$old->nama_lokasi],null);
+  });
+ }
+ public function addActivity(string $name,int $actor): int {
+  return DB::transaction(function()use($name,$actor){
+   $name=trim($name);
+   abort_if(DB::table('jenis_kegiatan')->pluck('nama')->contains(fn($n)=>$this->sameName($n,$name)),422,'Jenis kegiatan sudah ada.');
+   $id=(int)DB::table('jenis_kegiatan')->insertGetId($this->stamp(['nama'=>$name,'aktif'=>true]),'jenis_kegiatan_id');
+   foreach($this->locations() as $loc){
+    DB::table('tarif_retribusi')->insert($this->stamp(['lokasi_id'=>$loc['id'],'jenis_kegiatan_id'=>$id,'tarif'=>(int)$loc['rate'],'satuan'=>'hari','berlaku_mulai'=>date('Y-m-d'),'ditetapkan_oleh'=>$actor]));
+   }
+   $this->audit($actor,'kegiatan_dibuat','jenis_kegiatan',$id,null,['nama'=>$name]);
+   return $id;
+  });
+ }
+ public function setActivityActive(int $id,bool $active,int $actor): void {
+  DB::transaction(function()use($id,$active,$actor){
+   $old=DB::table('jenis_kegiatan')->where('jenis_kegiatan_id',$id)->lockForUpdate()->first(); abort_unless($old,404);
+   if(!$active)abort_if(DB::table('jenis_kegiatan')->where('aktif',true)->where('jenis_kegiatan_id','!=',$id)->doesntExist(),422,'Minimal satu jenis kegiatan harus aktif.');
+   DB::table('jenis_kegiatan')->where('jenis_kegiatan_id',$id)->update(['aktif'=>$active,'updated_at'=>now()]);
+   $this->audit($actor,$active?'kegiatan_diaktifkan':'kegiatan_dinonaktifkan','jenis_kegiatan',$id,['aktif'=>(bool)$old->aktif],['aktif'=>$active]);
   });
  }
 }

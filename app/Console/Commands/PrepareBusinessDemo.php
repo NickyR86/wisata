@@ -23,7 +23,7 @@ class PrepareBusinessDemo extends Command
    foreach(D::ACTIVITIES as $name)if(!DB::table('jenis_kegiatan')->where('nama',$name)->exists())DB::table('jenis_kegiatan')->insert(['nama'=>$name,'aktif'=>true,'created_at'=>now(),'updated_at'=>now()]);
    foreach(D::locations() as $sample){
     $id=DB::table('lokasi')->where('nama_lokasi',$sample['name'])->value('lokasi_id');
-    if(!$id)$id=DB::table('lokasi')->insertGetId(['nama_lokasi'=>$sample['name'],'status_aktif'=>true,'dikelola_dispar'=>$sample['managed'],'created_at'=>now(),'updated_at'=>now()],'lokasi_id');
+    if(!$id)$id=DB::table('lokasi')->insertGetId(['nama_lokasi'=>$sample['name'],'status_aktif'=>true,'dikelola_dispar'=>$sample['managed'],'butuh_rekomendasi_dlh'=>\App\Support\PermitRequirements::needsDlh(['name'=>$sample['name']]),'created_at'=>now(),'updated_at'=>now()],'lokasi_id');
     foreach(DB::table('jenis_kegiatan')->get() as $kind)if(!DB::table('tarif_retribusi')->where('lokasi_id',$id)->where('jenis_kegiatan_id',$kind->jenis_kegiatan_id)->exists())DB::table('tarif_retribusi')->insert(['lokasi_id'=>$id,'jenis_kegiatan_id'=>$kind->jenis_kegiatan_id,'tarif'=>$sample['rate'],'satuan'=>'hari','berlaku_mulai'=>'2020-01-01','ditetapkan_oleh'=>$admin,'created_at'=>now(),'updated_at'=>now()]);
    }
    foreach(D::REQUIREMENTS as $i=>$label)if(!DB::table('jenis_persyaratan')->where('kode','REQ-'.($i+1))->exists())DB::table('jenis_persyaratan')->insert(['kode'=>'REQ-'.($i+1),'nama'=>$label,'kondisi_wajib'=>'selalu','aktif'=>true,'created_at'=>now(),'updated_at'=>now()]);

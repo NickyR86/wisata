@@ -5,6 +5,7 @@ class PermitRequirements
 {
     public static function needsDlh(array $location): bool
     {
+        if (array_key_exists('dlh',$location)) return (bool)$location['dlh'];
         $normalize=fn($name)=>mb_strtolower(preg_replace('/\s+/u',' ',trim($name)));
         return in_array($normalize($location['name']),array_map($normalize,config('persyaratan.dlh_locations',[])),true);
     }

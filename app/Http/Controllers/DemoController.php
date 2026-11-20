@@ -148,7 +148,7 @@ class DemoController extends Controller
     public function store(Request $q)
     {
         $this->requireRole(['sekretariat']); $this->init();
-        $data=$q->validate(['name'=>'required|string|max:150','pic'=>'required|string|max:100','phone'=>'required|string|max:30','email'=>'nullable|email|max:150','address'=>'nullable|string|max:1000','activity'=>['required',Rule::in(D::ACTIVITIES)],'location_id'=>['required',Rule::in(collect(W::locations())->where('active',true)->pluck('id')->all())],'date'=>'required|date|after_or_equal:today','days'=>'required|integer|min:1|max:30','files'=>'nullable|boolean','discount'=>'nullable|in:25','discount_reason'=>'required_if:discount,25|nullable|string|max:1000']);
+        $data=$q->validate(['name'=>'required|string|max:150','pic'=>'required|string|max:100','phone'=>'required|string|max:30','email'=>'nullable|email|max:150','address'=>'nullable|string|max:1000','activity'=>['required',Rule::in(W::activities())],'location_id'=>['required',Rule::in(collect(W::locations())->where('active',true)->pluck('id')->all())],'date'=>'required|date|after_or_equal:today','days'=>'required|integer|min:1|max:30','files'=>'nullable|boolean','discount'=>'nullable|in:25','discount_reason'=>'required_if:discount,25|nullable|string|max:1000']);
         $sourceRules=[];
         foreach(\App\Support\ApprovalLetter::SOURCE_FIELDS as $field) $sourceRules['letter_source.'.$field]='nullable|string|max:200';
         $sourceRules['letter_source.request_date']='nullable|date_format:Y-m-d';
@@ -455,7 +455,40 @@ class DemoController extends Controller
         })->values();
         return response()->streamDownload(fn()=>print(json_encode(['keterangan'=>'Cadangan metadata demo; tidak memuat berkas biner atau kredensial.','permohonan'=>$data],JSON_PRETTY_PRINT|JSON_UNESCAPED_UNICODE)),'arsip-metadata-demo.json',['Content-Type'=>'application/json']);
     }
-    public function master() { $this->requireRole(['admin']); return $this->view('admin.lokasi.index',['title'=>'Lokasi & tarif','page'=>'master']); }
+    public function master() { $this->requireRole(['admin']); return $this->view('admin.lokasi.index',['title'=>'Lokasi & tarif','page'=>'master','activities'=>W::database()?app(BusinessStore::class)->activities(false):array_map(fn($n)=>['id'=>0,'name'=>$n,'active'=>true],D::ACTIVITIES)]); }
+    private function masterAction(callable $work,string $ok)
+    {
+        $this->requireRole(['admin']);
+        if(!W::database()) return back()->withErrors(['master'=>'Pengelolaan data master hanya tersedia pada mode database.']);
+        try { $work(app(BusinessStore::class)); }
+        catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) { if($e->getStatusCode()!==422) throw $e; return back()->withErrors(['master'=>$e->getMessage()])->withInput(); }
+        return back()->with('success',$ok);
+    }
+    public function addLocation(Request $q)
+    {
+        $this->requireRole(['admin']);
+        $d=$q->validate(['name'=>'required|string|min:3|max:150','rate'=>'required|integer|min:0|max:100000000','managed'=>'nullable|boolean','dlh'=>'nullable|boolean']);
+        return $this->masterAction(fn($s)=>$s->createLocation(['name'=>$d['name'],'rate'=>(int)$d['rate'],'managed'=>$q->boolean('managed'),'dlh'=>$q->boolean('dlh')],W::actor()),'Lokasi ditambahkan beserta tarif awal.');
+    }
+    public function editLocation(Request $q,int $id)
+    {
+        $this->requireRole(['admin']);
+        $d=$q->validate(['name'=>'required|string|min:3|max:150','managed'=>'nullable|boolean','dlh'=>'nullable|boolean','active'=>'nullable|boolean']);
+        return $this->masterAction(fn($s)=>$s->updateLocation($id,['name'=>$d['name'],'managed'=>$q->boolean('managed'),'dlh'=>$q->boolean('dlh'),'active'=>$q->boolean('active')],W::actor()),'Data lokasi diperbarui.');
+    }
+    public function removeLocation(int $id) { return $this->masterAction(fn($s)=>$s->deleteLocation($id,W::actor()),'Lokasi dihapus.'); }
+    public function addActivity(Request $q)
+    {
+        $this->requireRole(['admin']);
+        $d=$q->validate(['name'=>'required|string|min:3|max:150']);
+        return $this->masterAction(fn($s)=>$s->addActivity($d['name'],W::actor()),'Jenis kegiatan ditambahkan; tarif lokasi yang ada disalin ke jenis kegiatan ini.');
+    }
+    public function toggleActivity(Request $q,int $id)
+    {
+        $this->requireRole(['admin']);
+        $q->validate(['active'=>'required|boolean']);
+        return $this->masterAction(fn($s)=>$s->setActivityActive($id,$q->boolean('active'),W::actor()),'Status jenis kegiatan diperbarui.');
+    }
     public function updateRate(Request $q,int $id)
     {
         $this->requireRole(['admin']); $q->validate(['rate'=>'required|integer|min:0|max:100000000']);

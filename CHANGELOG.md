@@ -32,6 +32,11 @@ resmi di produksi (lihat bagian "Belum dikerjakan").
 **Diubah**: `store()` hanya menghormati `files=1` di `local/testing`; kotak centang dan kalimatnya hanya tampil di lokal (T-11).
 **Dampak**: di produksi unggahan persyaratan selalu wajib.
 
+## Tahap 3: Data Master (`docs/TAHAP-3-DATA-MASTER.md`)
+**Ditambah**: menu admin untuk menambah/ubah/nonaktifkan/hapus lokasi dan jenis kegiatan beserta tarif awal (mode database), jejak audit, migrasi penanda DLH dan katalog persyaratan, tes `tests/master_data_smoke.py`.
+**Diubah**: dropdown jenis kegiatan pada form pendaftaran membaca master; kewajiban rekomendasi DLH ditentukan kolom lokasi (menyelesaikan T-12).
+**Dampak**: wajib `php artisan migrate`. Lokasi dan kegiatan baru langsung muncul di formulir Permohonan Baru.
+
 ## Belum dikerjakan (menunggu keputusan atau tahap berikutnya)
 | Kode | Isi | Menunggu |
 |---|---|---|
@@ -40,5 +45,6 @@ resmi di produksi (lihat bagian "Belum dikerjakan").
 | T-4 | Ekspor/cadangan terbuka untuk semua peran | Kebijakan peran yang boleh mengunduh |
 | T-5 | Pemuatan semua permohonan berulang (mode database) | Pengukuran di mesin ber-PHP |
 | T-11 | Tanda tangan simulasi, kirim ulang tagihan simulasi | Keputusan alur tanda tangan produksi |
-| T-12 | Tidak ada jalur data master di produksi | Data resmi tarif, lokasi, persyaratan dari dinas |
+| T-12 | (sisa) Data resmi tarif dan lokasi perlu diinput admin lewat menu | Data resmi dari dinas |
+| - | Lokasi di luar master (input manual) | Keputusan kebijakan retribusi untuk lokasi non-Dispar |
 | - | Konsolidasi fitur dari cabang biru (bentrok jadwal, kalender berwarna, nama pelaku) | Keputusan skema induk sudah ada (hanlie); perlu tahap tersendiri |

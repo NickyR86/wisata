@@ -44,6 +44,11 @@ Route::middleware(\App\Http\Middleware\DemoSession::class)->group(function() {
     Route::post('/admin/pengguna',[DemoController::class,'addUser'])->name('pengguna.store');
     Route::get('/admin/lokasi',[DemoController::class,'master'])->name('master');
     Route::post('/admin/lokasi/{id}',[DemoController::class,'updateRate'])->whereNumber('id')->name('master.update');
+    Route::post('/admin/lokasi',[DemoController::class,'addLocation'])->name('master.add');
+    Route::post('/admin/lokasi/{id}/ubah',[DemoController::class,'editLocation'])->whereNumber('id')->name('master.edit');
+    Route::post('/admin/lokasi/{id}/hapus',[DemoController::class,'removeLocation'])->whereNumber('id')->name('master.remove');
+    Route::post('/admin/kegiatan',[DemoController::class,'addActivity'])->name('master.activity.add');
+    Route::post('/admin/kegiatan/{id}/status',[DemoController::class,'toggleActivity'])->whereNumber('id')->name('master.activity.toggle');
     Route::post('/admin/pengguna/{id}',[DemoController::class,'editUser'])->name('pengguna.update');
     Route::post('/permohonan/{id}/hapus',[DemoController::class,'removeRequest'])->whereNumber('id')->name('permohonan.remove');
     Route::post('/permohonan/{id}/pulihkan',[DemoController::class,'restoreRequest'])->whereNumber('id')->name('permohonan.restore');
