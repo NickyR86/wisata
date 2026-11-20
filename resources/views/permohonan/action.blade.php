@@ -10,6 +10,7 @@
 @elseif($r['status']==='rilis')@include('dokumen.letter')<p class="text-secondary">Rilis meneruskan surat ke penetapan retribusi. Surat belum ditandatangani dan belum menjadi izin final.</p><button name="action" value="release" class="btn btn-primary">Rilis ke Bendahara <x-icon name="arrow" size="16"/></button>
 @elseif($r['status']==='tagihan')
 @php($assessment=\App\Support\FinanceDocument::assessment($r))
+@if(\App\Support\FinanceDocument::tariffMissing($r))<div class="alert alert-warning" role="alert">Tarif belum ditetapkan untuk lokasi dan jenis kegiatan ini pada tanggal kegiatan, sehingga nominal tampil Rp 0. Minta admin menetapkannya di Data Master; penetapan dan penerbitan SKRD dikunci sampai tarif ada.</div>@endif
 <div data-assessment data-days="{{ $r['days'] }}" data-percent="{{ $assessment['percent'] }}">
 <div class="summary-line"><span>Tarif × {{ $r['days'] }} hari</span><strong data-assessment-subtotal>{{ $D::rupiah($assessment['subtotal']) }}</strong></div>
 <div class="summary-line"><span>Keringanan disetujui ({{ $assessment['percent'] }}%)</span><strong data-assessment-discount>{{ $D::rupiah($assessment['subtotal']-$assessment['total']) }}</strong></div>

@@ -13,6 +13,13 @@ class FinanceDocument
             'rate'=>$loc['rate'],'managed'=>$loc['managed'],'discount'=>$r['discount']];
     }
 
+    /** Mode database: true bila master tarif tidak memiliki baris berlaku untuk lokasi, kegiatan, dan tanggal permohonan (angka akan jatuh ke Rp 0). */
+    public static function tariffMissing(array $r): bool
+    {
+        if(!Workspace::database()) return false;
+        return app(\App\Services\BusinessStore::class)->tariff((int)$r['location_id'],(string)$r['activity'],(string)$r['date'])===null;
+    }
+
     public static function assessment(array $r): array
     {
         if (!empty($r['bill'])) return $r['bill'];
@@ -57,18 +64,21 @@ class FinanceDocument
         $base=$assessment['subtotal'];
         $percent=$assessment['percent'];
         $total=$assessment['total'];
+        $demo=app()->environment('local','testing');
+        $cfg=fn(string $key,string $demoValue)=>(string)(config('siap.documents.'.$key) ?: ($demo?$demoValue:'(belum diatur)'));
+        $address=trim((string)($r['address']??'')); if($address==='Belum diisi (demo)') $address='';
         $defaults=[
-            'number'=>'DEMO/'.$r['tracking'].'/'.strtoupper($type),
-            'payer'=>$r['pic'].' / '.$r['name'], 'address'=>'Alamat contoh, Pangkalpinang',
+            'number'=>$cfg('number_prefix','DEMO').'/'.$r['tracking'].'/'.strtoupper($type),
+            'payer'=>$r['pic'].' / '.$r['name'], 'address'=>$address!==''?$address:($demo?'Alamat contoh, Pangkalpinang':'(alamat belum diisi)'),
             'npwr'=>'—', 'period'=>substr($r['date'],0,7),
             'issued_date'=>$r['payment']['date']??date('Y-m-d'),
             'rental_date'=>$r['date'],
             'due'=>'2 hari sebelum pelaksanaan kegiatan',
-            'bank'=>'Bank contoh (demo)', 'account'=>'0000000000', 'method'=>'Non Tunai',
+            'bank'=>$cfg('bank','Bank contoh (demo)'), 'account'=>$cfg('account','0000000000'), 'method'=>'Non Tunai',
             'description'=>'Pelaksanaan kegiatan '.$r['activity'].' di '.$loc['name'],
-            'signer_rank'=>'Penata Tingkat I / III.d (demo)', 'signer_name'=>'Pejabat Contoh (fiktif)', 'signer_nip'=>'000000000000000000',
+            'signer_rank'=>$cfg('signer_rank','Penata Tingkat I / III.d (demo)'), 'signer_name'=>$cfg('signer_name','Pejabat Contoh (fiktif)'), 'signer_nip'=>$cfg('signer_nip','000000000000000000'),
             'signer_title'=>$type==='skrd'?'Kabid Destinasi Pariwisata dan Industri Pariwisata':'Bendahara Penerimaan',
-            'authority_name'=>'Kepala Dinas Contoh (fiktif)', 'authority_nip'=>'000000000000000000',
+            'authority_name'=>$cfg('authority_name','Kepala Dinas Contoh (fiktif)'), 'authority_nip'=>$cfg('authority_nip','000000000000000000'),
             'attention'=>"Harap penyetoran dilakukan pada bank / Bendahara Penerimaan Dinas Pariwisata Kota Pangkalpinang.\nPembayaran dilakukan sesuai tanggal jatuh tempo yang tercantum pada ketetapan.",
             'rows'=>[['code'=>'4.1.02.02.009.00001','label'=>'Retribusi Pelayanan Tempat Rekreasi dan Olahraga','amount'=>$type==='skrd'?$base:$total]],
         ];

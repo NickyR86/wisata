@@ -37,6 +37,11 @@ resmi di produksi (lihat bagian "Belum dikerjakan").
 **Diubah**: dropdown jenis kegiatan pada form pendaftaran membaca master; kewajiban rekomendasi DLH ditentukan kolom lokasi (menyelesaikan T-12).
 **Dampak**: wajib `php artisan migrate`. Lokasi dan kegiatan baru langsung muncul di formulir Permohonan Baru.
 
+## Tahap 4: Sinkron data dokumen keuangan (`docs/TAHAP-4-SINKRON-DOKUMEN.md`)
+**Diperiksa**: alur lokasi master -> dropdown -> kalender, dan tarif master -> SKRD/STS/STBP.
+**Diperbaiki**: alamat pemohon kini tampil di SKRD/STS/STBP; tarif master kosong tidak lagi diam-diam menjadi Rp 0 (penetapan dikunci dengan peringatan); identitas dokumen (awalan nomor, bank, rekening, penandatangan) dibaca dari konfigurasi `SIAP_DOC_*`.
+**Dampak**: di produksi, dokumen mencetak "(belum diatur)" sampai `SIAP_DOC_*` diisi dari data resmi dinas.
+
 ## Belum dikerjakan (menunggu keputusan atau tahap berikutnya)
 | Kode | Isi | Menunggu |
 |---|---|---|
@@ -46,5 +51,7 @@ resmi di produksi (lihat bagian "Belum dikerjakan").
 | T-5 | Pemuatan semua permohonan berulang (mode database) | Pengukuran di mesin ber-PHP |
 | T-11 | Tanda tangan simulasi, kirim ulang tagihan simulasi | Keputusan alur tanda tangan produksi |
 | T-12 | (sisa) Data resmi tarif dan lokasi perlu diinput admin lewat menu | Data resmi dari dinas |
-| - | Lokasi di luar master (input manual) | Keputusan kebijakan retribusi untuk lokasi non-Dispar |
-| - | Konsolidasi fitur dari cabang biru (bentrok jadwal, kalender berwarna, nama pelaku) | Keputusan skema induk sudah ada (hanlie); perlu tahap tersendiri |
+| - | Tahap 5: bebas biaya dan keringanan 25% (keputusan saat peninjauan berkas awal) | Siapa pengambil keputusan; dokumen dasar bebas biaya |
+| - | Tahap 6: cek bentrok jadwal dari cabang biru | - |
+| - | Tahap 7: lokasi di luar master (input manual) | Keputusan kebijakan retribusi untuk lokasi non-Dispar |
+| - | Kalender berwarna dan nama pelaku dari cabang biru | Tahap tersendiri |

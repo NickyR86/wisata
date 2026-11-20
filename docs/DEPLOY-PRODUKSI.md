@@ -19,7 +19,8 @@ Semua langkah **belum diuji di server nyata** oleh penyusunnya; jalankan di ling
 7. Migrasi Tahap 3 sudah mengisi katalog dasar persyaratan (REQ-1 sampai REQ-4) dan menambahkan kolom penanda rekomendasi DLH. Jenis kegiatan, lokasi, dan tarif **tidak** diisi otomatis; isi lewat menu Data Master setelah login admin (langkah 9).
 8. `php artisan siap:buat-admin` untuk membuat administrator awal. Perintah ini tidak menampilkan kata sandi; simpan kata sandi di pengelola kata sandi.
 9. Login sebagai admin, buka **Data Master**: tambahkan jenis kegiatan lebih dulu, lalu lokasi beserta tarif per hari dari data resmi dinas. Lokasi dan kegiatan itu langsung tampil di formulir Permohonan Baru.
-10. `php artisan config:cache && php artisan route:cache && php artisan view:cache`
+10. Isi `SIAP_DOC_*` di `.env` dengan data resmi dinas (awalan nomor, bank, rekening, nama/pangkat/NIP penandatangan). Tanpa ini SKRD/STS/STBP mencetak "(belum diatur)".
+11. `php artisan config:cache && php artisan route:cache && php artisan view:cache`
 
 ## 3. Web server
 - **Document root harus `public/`.** Jangan arahkan ke root proyek.

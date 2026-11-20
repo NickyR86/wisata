@@ -243,6 +243,7 @@ class DemoController extends Controller
             case 'release': $r['status']='tagihan'; $r['documents'][]='Surat Persetujuan'; $label='Surat dirilis untuk proses retribusi'; break;
             case 'save_assessment':
             case 'invoice':
+                if(\App\Support\FinanceDocument::tariffMissing($r)) return back()->withErrors(['action'=>'Tarif belum ditetapkan untuk lokasi dan jenis kegiatan ini pada tanggal kegiatan. Minta admin menetapkannya di Data Master sebelum penetapan.']);
                 if(\App\Support\FinanceDocument::sourceChanges($r)) return back()->withErrors(['action'=>'Sumber SKRD berubah. Tinjau dan simpan template SKRD sebelum penerbitan.']);
                 if($action==='invoice'&&$r['discount']==='diajukan') return back()->withErrors(['action'=>'Keputusan keringanan belum tersedia. Penetapan ditunda. Gunakan contoh pengajuan yang sudah disetujui untuk demo diskon; kewenangan keputusan belum diasumsikan.']);
                 $q->validate(['rate'=>'required|numeric|decimal:0,2|min:0|max:100000000','rate_reason'=>'required|string|max:500']);
