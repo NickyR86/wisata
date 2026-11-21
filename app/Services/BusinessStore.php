@@ -76,7 +76,7 @@ class BusinessStore
   $requirements=\App\Support\PermitRequirements::forLocation($location); if(($r['discount']??'tidak_diajukan')!=='tidak_diajukan') $requirements[]=D::RELIEF_REQUIREMENT;
   $files=collect($r['files'])->keyBy('label');
   foreach($requirements as $label)abort_unless($files->has($label),422,'Berkas wajib belum lengkap: '.$label);
-  $r['files']=$files->only(array_values($requirements))->values()->all();
+  $allowed=array_values($requirements); if($files->has(D::PROMOTER_REQUIREMENT)) $allowed[]=D::PROMOTER_REQUIREMENT; $r['files']=$files->only($allowed)->values()->all();
   return DB::transaction(function()use($r,$actor){
    $kind=DB::table('jenis_kegiatan')->where('nama',$r['activity'])->where('aktif',true)->value('jenis_kegiatan_id');abort_unless($kind,422,'Jenis kegiatan tidak aktif.');
    abort_unless(DB::table('lokasi')->where('lokasi_id',$r['location_id'])->where('status_aktif',true)->exists(),422);
@@ -88,9 +88,9 @@ class BusinessStore
    $r['id']=$id;$r['tracking']='DPR-'.date('Y').'-'.str_pad((string)$id,4,'0',STR_PAD_LEFT);$r['_v']=0;$r['_history_count']=0;
    DB::table('permohonan')->where('permohonan_id',$id)->update(['nomor_tracking'=>$r['tracking']]);
    foreach($r['files'] as $i=>$file){
-    $catalogIndex=array_search($file['label'],array_merge(D::REQUIREMENTS,[D::RELIEF_REQUIREMENT]),true);abort_if($catalogIndex===false,422,'Jenis berkas tidak dikenal.');
+    $catalogIndex=array_search($file['label'],array_merge(D::REQUIREMENTS,[D::RELIEF_REQUIREMENT,D::PROMOTER_REQUIREMENT]),true);abort_if($catalogIndex===false,422,'Jenis berkas tidak dikenal.');
     $type=DB::table('jenis_persyaratan')->where('kode','REQ-'.($catalogIndex+1))->value('jenis_persyaratan_id');abort_unless($type,422,'Katalog persyaratan belum disiapkan.');
-    $req=DB::table('persyaratan_permohonan')->insertGetId($this->stamp(['permohonan_id'=>$id,'jenis_persyaratan_id'=>$type,'nama_snapshot'=>$file['label'],'wajib'=>true]),'persyaratan_permohonan_id');
+    $req=DB::table('persyaratan_permohonan')->insertGetId($this->stamp(['permohonan_id'=>$id,'jenis_persyaratan_id'=>$type,'nama_snapshot'=>$file['label'],'wajib'=>$file['label']!==D::PROMOTER_REQUIREMENT]),'persyaratan_permohonan_id');
     if(!empty($file['sample'])){
      $stored='sample-'.bin2hex(random_bytes(12)).'.txt';$path=storage_path('app/demo-uploads/'.$stored);if(!is_dir(dirname($path)))mkdir(dirname($path),0775,true);
      file_put_contents($path,'DOKUMEN CONTOH DEMO - BUKAN DOKUMEN RESMI'."\n".$file['label']."\n".$r['name']);$file=['stored'=>$stored,'name'=>'contoh-'.($i+1).'.txt'];

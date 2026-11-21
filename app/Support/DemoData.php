@@ -28,7 +28,10 @@ class DemoData
     /** Bebas biaya yang sudah disetujui: tidak ada SKRD, STS, STBP, maupun bukti transfer. */
     public static function isFree(array $r): bool { return ($r['relief']??'')==='pembebasan' && ($r['discount']??'')==='disetujui'; }
     public static function reliefName(array $r): string { return ($r['relief']??'')==='pembebasan' ? 'Bebas biaya' : 'Keringanan 25%'; }
-    public const REQUIREMENTS = ['Surat permohonan', 'Proposal / rundown', 'Identitas penanggung jawab', 'Rekomendasi DLH'];
+    // Daftar persyaratan mengikuti lembar periksa kelengkapan dinas.
+    public const REQUIREMENTS = ['Surat permohonan persetujuan menyelenggarakan acara', 'Proposal Kegiatan/Rundown', 'Fotokopi KTP pemohon', 'Surat Rekomendasi dari Dinas Lingkungan Hidup'];
+    public const DLH_REQUIREMENT = 'Surat Rekomendasi dari Dinas Lingkungan Hidup';
+    public const PROMOTER_REQUIREMENT = 'Fotokopi jasa impresariat/promotor dari PTSP (jika menggunakan jasa)';
 
     public static function locations(): array
     {

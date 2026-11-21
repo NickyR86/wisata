@@ -13,7 +13,7 @@ png='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jhZk
 files={f'requirements.{i}':{'name':f'berkas-{i}.png','base64':png} for i in range(3)}
 data={'name':'Uji lokasi DLH','pic':'Penguji','phone':'0800000000','activity':'Bazar UMKM','date':(dt.date.today()+dt.timedelta(days=20)).isoformat(),'days':'1','location_id':'3'}
 body,url=request('/permohonan',data,files=files)
-assert '/permohonan/' in url and 'berkas-2.png' in body and 'Rekomendasi DLH' not in body, re.findall(r'<li>(.*?)</li>',body,re.S)
+assert '/permohonan/' in url and 'berkas-2.png' in body and 'Surat Rekomendasi dari Dinas Lingkungan Hidup' not in body, re.findall(r'<li>(.*?)</li>',body,re.S)
 for location in ['1','2']:
  request('/permohonan/baru');data['location_id']=location
  body,url=request('/permohonan',data,files=files)
@@ -24,6 +24,6 @@ for location in ['1','2']:
  del files['requirements.3']
 request('/permohonan/baru');data['location_id']='3';data['files']='1'
 body,url=request('/permohonan',data)
-assert '/permohonan/' in url and 'Rekomendasi DLH' not in body
+assert '/permohonan/' in url and 'Surat Rekomendasi dari Dinas Lingkungan Hidup' not in body
 request('/demo/reset',{})
-print(f'PASS: {checks} requests; three ordinary requirements, DLH mandatory at both locations, sample files filtered')
+print(f'PASS: {checks} requests; three ordinary requirements (names follow the physical checklist), DLH mandatory at both locations, sample files filtered')

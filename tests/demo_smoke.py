@@ -157,6 +157,12 @@ role('kadis'); request(path,{'action':'sign','confirmed':'1'})
 role('sekretariat')
 body,_=request(path,{'action':'handover','recipient':'Penerima Bebas Biaya','confirmed':'1'})
 assert 'Permohonan selesai.' in body and 'Bebas biaya' in body, 'Jalur bebas biaya harus selesai tanpa SKRD, STS, dan STBP'
+# Lembar periksa kelengkapan mengikuti formulir fisik dinas.
+body,_=request(f'/permohonan/{free}/lembar-periksa')
+assert 'LEMBAR PERIKSA KELENGKAPAN' in body and 'Petugas Pelayanan Perizinan' in body and 'bebas biaya' in body.lower(), 'Lembar periksa bebas biaya harus menandai SKRD/STS/STBP/bukti TF tidak berlaku'
+assert 'Fotokopi jasa impresariat/promotor' in body and 'Kepala Bidang Destinasi Pariwisata dan Industri Pariwisata' in body
+body,_=request(f'/permohonan/{record_id}/lembar-periksa')
+assert 'Surat permohonan persetujuan menyelenggarakan acara' in body and 'Proposal Kegiatan/Rundown' in body
 # Keringanan ditolak saat peninjauan awal: tarif normal berlaku.
 body,url=request('/permohonan',{'name':'Uji Keringanan Ditolak','pic':'PIC','phone':'0800','activity':'Festival budaya','location_id':'2','date':(today+dt.timedelta(days=63)).isoformat(),'days':'1','files':'1','discount':'25','discount_reason':'Dasar keringanan contoh untuk uji penolakan.'})
 rejected=int(url.rsplit('/',1)[-1]); path=f'/permohonan/{rejected}/aksi'

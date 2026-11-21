@@ -48,6 +48,11 @@ resmi di produksi (lihat bagian "Belum dikerjakan").
 **Asumsi menunggu konfirmasi**: pemutus = Kabid; STBP juga tidak terbit pada bebas biaya.
 **Dampak**: wajib `php artisan migrate`; tes demo diperbarui.
 
+## Tahap 6: Persyaratan sesuai lembar periksa dan cetak lembar periksa (`docs/TAHAP-6-LEMBAR-PERIKSA.md`)
+**Ditambah**: persyaratan opsional "fotokopi jasa impresariat/promotor dari PTSP"; halaman cetak Lembar Periksa Kelengkapan Persyaratan (☑/☐/−, tanda tangan Petugas dan Kabid DIP); migrasi katalog REQ-1..REQ-6.
+**Diubah**: nama persyaratan mengikuti formulir fisik dinas.
+**Dampak**: wajib `php artisan migrate`.
+
 ## Belum dikerjakan (menunggu keputusan atau tahap berikutnya)
 | Kode | Isi | Menunggu |
 |---|---|---|
@@ -58,6 +63,7 @@ resmi di produksi (lihat bagian "Belum dikerjakan").
 | T-12 | (sisa) Data resmi tarif dan lokasi perlu diinput admin lewat menu | Data resmi dari dinas |
 | - | Tahap 6: persyaratan sesuai lembar periksa fisik (jasa impresariat/promotor PTSP bersyarat, KTP, rekomendasi DLH bersyarat) dan cetak lembar periksa | Konfirmasi daftar dari dinas |
 | - | Tahap 7: cek bentrok jadwal dari cabang biru | - |
+| - | Layar verifikasi per berkas oleh petugas dan nama pejabat otomatis di lembar periksa | Tahap tersendiri |
 | - | Tahap 8: lokasi di luar master (input manual) | Keputusan kebijakan retribusi untuk lokasi non-Dispar |
 | - | Watermark "DEMO - BUKAN DOKUMEN RESMI" pada dokumen produksi, tanda tangan simulasi | Alur tanda tangan produksi dan template resmi |
 | - | Kalender berwarna dan nama pelaku dari cabang biru | Tahap tersendiri |

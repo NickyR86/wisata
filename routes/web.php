@@ -43,6 +43,7 @@ Route::middleware(\App\Http\Middleware\DemoSession::class)->group(function() {
     Route::get('/admin/pengguna',[DemoController::class,'users'])->name('pengguna');
     Route::post('/admin/pengguna',[DemoController::class,'addUser'])->name('pengguna.store');
     Route::get('/admin/lokasi',[DemoController::class,'master'])->name('master');
+    Route::get('/permohonan/{id}/lembar-periksa',[DemoController::class,'checklist'])->whereNumber('id')->name('checklist');
     Route::post('/admin/lokasi/{id}',[DemoController::class,'updateRate'])->whereNumber('id')->name('master.update');
     Route::post('/admin/lokasi',[DemoController::class,'addLocation'])->name('master.add');
     Route::post('/admin/lokasi/{id}/ubah',[DemoController::class,'editLocation'])->whereNumber('id')->name('master.edit');

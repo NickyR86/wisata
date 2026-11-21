@@ -164,11 +164,18 @@ class DemoController extends Controller
         if(!($q->boolean('files')&&app()->environment('local','testing'))) {
             $rules=[]; foreach($requirements as $i=>$label) $rules['requirements.'.$i]='required|file|mimes:pdf,jpg,jpeg,png|max:2048';
             if($relief) $rules['relief_doc']='required|file|mimes:pdf,jpg,jpeg,png|max:2048';
+            $rules['promoter_doc']='nullable|file|mimes:pdf,jpg,jpeg,png|max:2048';
             $q->validate($rules);
             foreach($requirements as $i=>$label) {
                 $file=$q->file('requirements.'.$i); $stored=bin2hex(random_bytes(20)).'.'.$file->extension();
                 $dir=storage_path('app/demo-uploads'); if(!is_dir($dir)) mkdir($dir,0775,true); abort_if(file_put_contents($dir.'/'.$stored,file_get_contents($file->getRealPath()))===false,500,'Berkas tidak dapat disimpan.');
                 $uploadedRequirements[]=['label'=>$label,'name'=>basename($file->getClientOriginalName()),'sample'=>false,'stored'=>$stored,'size'=>filesize($dir.'/'.$stored)];
+            }
+            if($q->hasFile('promoter_doc')) {
+                $file=$q->file('promoter_doc'); $stored=bin2hex(random_bytes(20)).'.'.$file->extension();
+                $dir=storage_path('app/demo-uploads'); if(!is_dir($dir)) mkdir($dir,0775,true);
+                abort_if(file_put_contents($dir.'/'.$stored,file_get_contents($file->getRealPath()))===false,500,'Berkas tidak dapat disimpan.');
+                $uploadedRequirements[]=['label'=>D::PROMOTER_REQUIREMENT,'name'=>basename($file->getClientOriginalName()),'sample'=>false,'stored'=>$stored,'size'=>filesize($dir.'/'.$stored)];
             }
             if($relief) {
                 $file=$q->file('relief_doc'); $stored=bin2hex(random_bytes(20)).'.'.$file->extension();
@@ -325,6 +332,13 @@ class DemoController extends Controller
         $r['history'][]=['at'=>date('Y-m-d H:i:s'),'role'=>$this->role(),'action'=>'Tanda tangan basah dicatat','note'=>'Penandatangan: '.$signer['name'].'; versi draft '.$r['version'].'; '.$data['reason']];
         try {$this->save($r);}catch(\Throwable $e){if(is_file($path))unlink($path);throw $e;}
         return redirect()->route('detail',$id)->with('success','Surat bertanda tangan basah tersimpan. Permohonan masuk antrean serah terima Sekretariat.');
+    }
+    public function checklist(int $id)
+    {
+        $r=$this->record($id);
+        abort_unless(D::canSeeFiles($this->role(),$r),403);
+        $location=collect(W::locations())->firstWhere('id',$r['location_id']);
+        return $this->view('dokumen.checklist',['r'=>$r,'rows'=>\App\Support\PermitRequirements::checklist($r,$location),'title'=>'Lembar periksa kelengkapan','page'=>'pratinjau']);
     }
     public function document(int $id,string $type)
     {
