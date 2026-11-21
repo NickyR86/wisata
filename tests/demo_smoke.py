@@ -137,15 +137,36 @@ body,_=request('/kalender?month='+ (today+dt.timedelta(days=45)).strftime('%Y-%m
 assert 'Komunitas Musik Kota' not in body, 'Rejected request is shown in calendar'
 body,_=request('/ekspor?kind=arsip')
 assert 'Yayasan Uji Alur' in body
-# Pending relief must block invoicing.
-body,url=request('/permohonan',{'name':'Uji Keringanan Pending','pic':'PIC','phone':'0800','activity':'Festival budaya','location_id':'1','date':(today+dt.timedelta(days=60)).isoformat(),'days':'1','files':'1','discount':'25','discount_reason':'Pengajuan contoh belum diputuskan.'})
-pending=int(url.rsplit('/',1)[-1]); path=f'/permohonan/{pending}/aksi'
-for name,act,data in [('kabid','approve',{}),('petugas','send',{'draft':draft}),('kabid','approve',{}),('sekretaris','approve',{}),('kabid','release',{})]:
+# Keringanan diputuskan saat peninjauan berkas awal: 25% disetujui lalu tagihan memakai potongan.
+body,url=request('/permohonan',{'name':'Uji Keringanan 25','pic':'PIC','phone':'0800','activity':'Festival budaya','location_id':'2','date':(today+dt.timedelta(days=61)).isoformat(),'days':'1','files':'1','discount':'25','discount_reason':'Dasar keringanan contoh untuk uji alur.'})
+relief25=int(url.rsplit('/',1)[-1]); path=f'/permohonan/{relief25}/aksi'
+role('kabid'); request(path,{'action':'approve','relief_decision':'approve'})
+for name,act,data in [('petugas','send',{'draft':draft}),('kabid','approve',{}),('sekretaris','approve',{}),('kabid','release',{})]:
     role(name); request(path,dict(action=act,**data))
 role('bendahara')
 body,_=request(path,{'action':'invoice'})
-assert 'Keputusan keringanan belum tersedia' in body
+assert 'Rp 375.000' in body and '25%' in body, 'Potongan 25% harus diterapkan setelah disetujui saat peninjauan awal'
+# Bebas biaya: disetujui saat peninjauan awal, tahap retribusi dilewati, serah terima hanya Surat Persetujuan.
+body,url=request('/permohonan',{'name':'Uji Bebas Biaya','pic':'PIC','phone':'0800','activity':'Festival budaya','location_id':'2','date':(today+dt.timedelta(days=62)).isoformat(),'days':'1','files':'1','discount':'free','discount_reason':'Kegiatan sosial contoh untuk uji alur.'})
+free=int(url.rsplit('/',1)[-1]); path=f'/permohonan/{free}/aksi'
+role('kabid'); request(path,{'action':'approve','relief_decision':'approve'})
+for name,act,data in [('petugas','send',{'draft':draft}),('kabid','approve',{}),('sekretaris','approve',{}),('kabid','release',{})]:
+    role(name); request(path,dict(action=act,**data))
+role('bendahara'); request(path,{'action':'invoice'},expected=403)
+role('kadis'); request(path,{'action':'sign','confirmed':'1'})
+role('sekretariat')
+body,_=request(path,{'action':'handover','recipient':'Penerima Bebas Biaya','confirmed':'1'})
+assert 'Permohonan selesai.' in body and 'Bebas biaya' in body, 'Jalur bebas biaya harus selesai tanpa SKRD, STS, dan STBP'
+# Keringanan ditolak saat peninjauan awal: tarif normal berlaku.
+body,url=request('/permohonan',{'name':'Uji Keringanan Ditolak','pic':'PIC','phone':'0800','activity':'Festival budaya','location_id':'2','date':(today+dt.timedelta(days=63)).isoformat(),'days':'1','files':'1','discount':'25','discount_reason':'Dasar keringanan contoh untuk uji penolakan.'})
+rejected=int(url.rsplit('/',1)[-1]); path=f'/permohonan/{rejected}/aksi'
+role('kabid'); request(path,{'action':'approve','relief_decision':'reject','note':'Dokumen pendukung belum memenuhi syarat.'})
+for name,act,data in [('petugas','send',{'draft':draft}),('kabid','approve',{}),('sekretaris','approve',{}),('kabid','release',{})]:
+    role(name); request(path,dict(action=act,**data))
+role('bendahara')
+body,_=request(path,{'action':'invoice'})
+assert 'Rp 500.000' in body, 'Keringanan ditolak: tagihan harus memakai tarif normal'
 request('/demo/reset',{})
-print(f'PASS: {checks} request checks; seven roles, lifecycle, revision, guards, archive, document preview, frozen invoice, 25% relief and pending decision.')
+print(f'PASS: {checks} request checks; seven roles, lifecycle, revision, guards, archive, document preview, frozen invoice, relief decided at first review (25% approved, free, rejected).')
 
 

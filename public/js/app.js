@@ -22,12 +22,26 @@ function updateEstimate() {
     if(document.getElementById('estimateDays')) document.getElementById('estimateDays').textContent = `${days} hari`;
     if(document.getElementById('estimateTotal')) document.getElementById('estimateTotal').textContent = rate ? rupiah(rate * days) : '—';
     const discount = document.getElementById('discount');
-    if (option?.dataset.managed === '0') { discount.checked = false; discount.disabled = true; } else { discount.disabled = false; }
-    document.getElementById('discount_reason').required = discount.checked;
+    if (discount) {
+        if (option?.dataset.managed === '0') { discount.value = ''; discount.disabled = true; } else { discount.disabled = false; }
+        const requested = discount.value !== '';
+        const reason = document.getElementById('discount_reason');
+        if (reason) reason.required = requested;
+        const reliefRow = document.querySelector('[data-relief-upload]');
+        const reliefInput = reliefRow?.querySelector('input[type="file"]');
+        const useSample = !!document.getElementById('files')?.checked;
+        if (reliefRow) reliefRow.hidden = !requested;
+        if (reliefInput) {
+            if (!requested) reliefInput.value = '';
+            reliefInput.disabled = !requested || useSample;
+            reliefInput.required = requested && !useSample;
+        }
+    }
 }
 locationInput?.addEventListener('change', updateEstimate);
 daysInput?.addEventListener('input', updateEstimate);
 document.getElementById('discount')?.addEventListener('change', updateEstimate);
+document.getElementById('files')?.addEventListener('change', updateEstimate);
 updateEstimate();
 document.querySelectorAll('[data-print]').forEach(button => button.addEventListener('click', () => window.print()));
 

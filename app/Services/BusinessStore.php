@@ -28,7 +28,7 @@ class BusinessStore
   $id=$p->permohonan_id;
   $r=['id'=>(int)$id,'_v'=>(int)$p->lock_version,'tracking'=>$p->nomor_tracking,'name'=>$p->nama_pemohon,'pic'=>$p->penanggung_jawab,'phone'=>$p->kontak_pemohon,'email'=>$p->email_pemohon,'address'=>$p->alamat_pemohon,
    'location_id'=>(int)$p->lokasi_id,'activity'=>DB::table('jenis_kegiatan')->where('jenis_kegiatan_id',$p->jenis_kegiatan_id)->value('nama'),'date'=>$p->tanggal_kegiatan,'days'=>(int)$p->jumlah_hari,'submitted'=>substr($p->diterima_pada,0,10),'status'=>$p->status,
-   'discount'=>$p->status_keringanan,'discount_percent'=>(float)$p->persentase_disetujui,'discount_reason'=>$p->alasan_keringanan,
+   'discount'=>$p->status_keringanan,'relief'=>$p->jenis_keringanan,'relief_note'=>$p->catatan_keputusan_keringanan,'discount_percent'=>(float)$p->persentase_disetujui,'discount_reason'=>$p->alasan_keringanan,
    'deleted_at'=>$p->deleted_at,'deleted_by'=>$p->deleted_by,'delete_reason'=>$p->alasan_hapus,
    'draft'=>'','version'=>1,'bill'=>null,'payment'=>null,'files'=>[],'documents'=>[],'templates'=>[],'uploads'=>[],'document_sources'=>[],'signed'=>false,'recipient'=>null,'completed'=>null,'history'=>[]];
   foreach(DB::table('persyaratan_permohonan')->where('permohonan_id',$id)->orderBy('persyaratan_permohonan_id')->get() as $req){
@@ -73,7 +73,7 @@ class BusinessStore
  }
  public function create(array $r,int $actor): array {
   $location=collect($this->locations())->firstWhere('id',$r['location_id']);abort_unless($location,422,'Lokasi tidak ditemukan.');
-  $requirements=\App\Support\PermitRequirements::forLocation($location);
+  $requirements=\App\Support\PermitRequirements::forLocation($location); if(($r['discount']??'tidak_diajukan')!=='tidak_diajukan') $requirements[]=D::RELIEF_REQUIREMENT;
   $files=collect($r['files'])->keyBy('label');
   foreach($requirements as $label)abort_unless($files->has($label),422,'Berkas wajib belum lengkap: '.$label);
   $r['files']=$files->only(array_values($requirements))->values()->all();
@@ -83,12 +83,12 @@ class BusinessStore
    $id=DB::table('permohonan')->insertGetId($this->stamp([
     'data_surat'=>$this->json($r['letter_source']??[]),'nomor_tracking'=>'TMP-'.bin2hex(random_bytes(12)),'nama_pemohon'=>$r['name'],'penanggung_jawab'=>$r['pic'],'kontak_pemohon'=>$r['phone'],'email_pemohon'=>$r['email']??null,'alamat_pemohon'=>$r['address']??'Belum diisi (demo)',
     'lokasi_id'=>$r['location_id'],'jenis_kegiatan_id'=>$kind,'tanggal_kegiatan'=>$r['date'],'jumlah_hari'=>$r['days'],'diterima_pada'=>now(),'status'=>'masuk','diinput_oleh'=>$actor,
-    'jenis_keringanan'=>$r['discount']==='tidak_diajukan'?'normal':'pengurangan','status_keringanan'=>$r['discount'],'alasan_keringanan'=>$r['discount_reason']??null,'persentase_disetujui'=>$r['discount_percent']??0,
+    'jenis_keringanan'=>$r['relief']??($r['discount']==='tidak_diajukan'?'normal':'pengurangan'),'status_keringanan'=>$r['discount'],'alasan_keringanan'=>$r['discount_reason']??null,'persentase_disetujui'=>$r['discount_percent']??0,
    ]),'permohonan_id');
    $r['id']=$id;$r['tracking']='DPR-'.date('Y').'-'.str_pad((string)$id,4,'0',STR_PAD_LEFT);$r['_v']=0;$r['_history_count']=0;
    DB::table('permohonan')->where('permohonan_id',$id)->update(['nomor_tracking'=>$r['tracking']]);
    foreach($r['files'] as $i=>$file){
-    $catalogIndex=array_search($file['label'],D::REQUIREMENTS,true);abort_if($catalogIndex===false,422,'Jenis berkas tidak dikenal.');
+    $catalogIndex=array_search($file['label'],array_merge(D::REQUIREMENTS,[D::RELIEF_REQUIREMENT]),true);abort_if($catalogIndex===false,422,'Jenis berkas tidak dikenal.');
     $type=DB::table('jenis_persyaratan')->where('kode','REQ-'.($catalogIndex+1))->value('jenis_persyaratan_id');abort_unless($type,422,'Katalog persyaratan belum disiapkan.');
     $req=DB::table('persyaratan_permohonan')->insertGetId($this->stamp(['permohonan_id'=>$id,'jenis_persyaratan_id'=>$type,'nama_snapshot'=>$file['label'],'wajib'=>true]),'persyaratan_permohonan_id');
     if(!empty($file['sample'])){
@@ -114,7 +114,9 @@ class BusinessStore
    $p=DB::table('permohonan')->where('permohonan_id',$r['id'])->lockForUpdate()->first();abort_unless($p,404);
    abort_unless((int)$p->lock_version===(int)$r['_v'],409,'Data sudah berubah. Muat ulang sebelum menyimpan.');
    $id=$r['id'];$old=$this->hydrate($p);$now=now();
-   DB::table('permohonan')->where('permohonan_id',$id)->update(['data_surat'=>$this->json($r['letter_source']??[]),'alamat_pemohon'=>$r['address']??$p->alamat_pemohon,'status'=>$r['status'],'deleted_at'=>$r['deleted_at']??null,'deleted_by'=>empty($r['deleted_at'])?null:$actor,'alasan_hapus'=>$r['delete_reason']??null,'lock_version'=>$p->lock_version+1,'updated_at'=>$now]);
+   $reliefUpdate=['status_keringanan'=>$r['discount'],'persentase_disetujui'=>$r['discount_percent']??0,'catatan_keputusan_keringanan'=>$r['relief_note']??$p->catatan_keputusan_keringanan];
+   if($old['discount']!==$r['discount']&&in_array($r['discount'],['disetujui','ditolak'],true)){$reliefUpdate['keringanan_diputuskan_oleh']=$actor;$reliefUpdate['keringanan_diputuskan_pada']=$now;}
+   DB::table('permohonan')->where('permohonan_id',$id)->update(['data_surat'=>$this->json($r['letter_source']??[]),'alamat_pemohon'=>$r['address']??$p->alamat_pemohon,'status'=>$r['status'],'deleted_at'=>$r['deleted_at']??null,'deleted_by'=>empty($r['deleted_at'])?null:$actor,'alasan_hapus'=>$r['delete_reason']??null,'lock_version'=>$p->lock_version+1,'updated_at'=>$now]+$reliefUpdate);
    if($p->status==='masuk'&&$r['status']==='draft'){
     $reqs=DB::table('persyaratan_permohonan')->where('permohonan_id',$id)->pluck('persyaratan_permohonan_id');
     DB::table('dokumen_persyaratan')->whereIn('persyaratan_permohonan_id',$reqs)->update(['status_verifikasi'=>'diterima','diverifikasi_oleh'=>$actor,'diverifikasi_pada'=>$now,'updated_at'=>$now]);
@@ -173,7 +175,7 @@ class BusinessStore
     $finalIds[$kind]=$this->document($r,$kind,$owner,$actor,$old);
    }
    if($r['status']==='selesai'&&!DB::table('serah_terima')->where('permohonan_id',$id)->exists()){
-    abort_unless($r['signed']&&$payment&&count($finalIds)===4,422);
+    $free=D::isFree($r); abort_unless($r['signed']&&($free||$payment)&&count($finalIds)===($free?1:4),422);
     $handover=DB::table('serah_terima')->insertGetId($this->stamp(['permohonan_id'=>$id,'nama_penerima'=>$r['recipient'],'diserahkan_oleh'=>$actor,'diserahkan_pada'=>$now,'kelengkapan_diperiksa'=>true]),'serah_terima_id');
     foreach($finalIds as $kind=>$version)if($kind!=='sts')DB::table('serah_terima_dokumen')->insert(['serah_terima_id'=>$handover,'versi_dokumen_id'=>$version]);
    }

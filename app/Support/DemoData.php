@@ -24,6 +24,10 @@ class DemoData
         'bayar' => 'bendahara', 'ttd' => 'kadis', 'serah' => 'sekretariat',
     ];
     public const ACTIVITIES = ['Festival budaya', 'Seminar / workshop', 'Bazar UMKM', 'Kegiatan olahraga', 'Fotografi / prewedding', 'Konser / pertunjukan'];
+    public const RELIEF_REQUIREMENT = 'Dokumen pendukung keringanan';
+    /** Bebas biaya yang sudah disetujui: tidak ada SKRD, STS, STBP, maupun bukti transfer. */
+    public static function isFree(array $r): bool { return ($r['relief']??'')==='pembebasan' && ($r['discount']??'')==='disetujui'; }
+    public static function reliefName(array $r): string { return ($r['relief']??'')==='pembebasan' ? 'Bebas biaya' : 'Keringanan 25%'; }
     public const REQUIREMENTS = ['Surat permohonan', 'Proposal / rundown', 'Identitas penanggung jawab', 'Rekomendasi DLH'];
 
     public static function locations(): array

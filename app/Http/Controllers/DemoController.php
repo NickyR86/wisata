@@ -148,7 +148,7 @@ class DemoController extends Controller
     public function store(Request $q)
     {
         $this->requireRole(['sekretariat']); $this->init();
-        $data=$q->validate(['name'=>'required|string|max:150','pic'=>'required|string|max:100','phone'=>'required|string|max:30','email'=>'nullable|email|max:150','address'=>'nullable|string|max:1000','activity'=>['required',Rule::in(W::activities())],'location_id'=>['required',Rule::in(collect(W::locations())->where('active',true)->pluck('id')->all())],'date'=>'required|date|after_or_equal:today','days'=>'required|integer|min:1|max:30','files'=>'nullable|boolean','discount'=>'nullable|in:25','discount_reason'=>'required_if:discount,25|nullable|string|max:1000']);
+        $data=$q->validate(['name'=>'required|string|max:150','pic'=>'required|string|max:100','phone'=>'required|string|max:30','email'=>'nullable|email|max:150','address'=>'nullable|string|max:1000','activity'=>['required',Rule::in(W::activities())],'location_id'=>['required',Rule::in(collect(W::locations())->where('active',true)->pluck('id')->all())],'date'=>'required|date|after_or_equal:today','days'=>'required|integer|min:1|max:30','files'=>'nullable|boolean','discount'=>'nullable|in:25,free','discount_reason'=>'required_if:discount,25,free|nullable|string|min:5|max:1000']);
         $sourceRules=[];
         foreach(\App\Support\ApprovalLetter::SOURCE_FIELDS as $field) $sourceRules['letter_source.'.$field]='nullable|string|max:200';
         $sourceRules['letter_source.request_date']='nullable|date_format:Y-m-d';
@@ -158,19 +158,28 @@ class DemoController extends Controller
         $uploadedRequirements=[];
         $loc=collect(W::locations())->firstWhere('id',(int)$data['location_id']);
         $requirements=\App\Support\PermitRequirements::forLocation($loc);
-        if($q->discount==='25'&&!$loc['managed']) return back()->withErrors(['discount'=>'Keringanan 25% hanya dapat diajukan untuk lokasi yang dikelola Dispar.'])->withInput();
+        $relief=in_array($q->discount,['25','free'],true)?$q->discount:null;
+        if($relief&&!$loc['managed']) return back()->withErrors(['discount'=>'Keringanan atau bebas biaya hanya dapat diajukan untuk lokasi yang dikelola Dispar.'])->withInput();
         try {
         if(!($q->boolean('files')&&app()->environment('local','testing'))) {
             $rules=[]; foreach($requirements as $i=>$label) $rules['requirements.'.$i]='required|file|mimes:pdf,jpg,jpeg,png|max:2048';
+            if($relief) $rules['relief_doc']='required|file|mimes:pdf,jpg,jpeg,png|max:2048';
             $q->validate($rules);
             foreach($requirements as $i=>$label) {
                 $file=$q->file('requirements.'.$i); $stored=bin2hex(random_bytes(20)).'.'.$file->extension();
                 $dir=storage_path('app/demo-uploads'); if(!is_dir($dir)) mkdir($dir,0775,true); abort_if(file_put_contents($dir.'/'.$stored,file_get_contents($file->getRealPath()))===false,500,'Berkas tidak dapat disimpan.');
                 $uploadedRequirements[]=['label'=>$label,'name'=>basename($file->getClientOriginalName()),'sample'=>false,'stored'=>$stored,'size'=>filesize($dir.'/'.$stored)];
             }
+            if($relief) {
+                $file=$q->file('relief_doc'); $stored=bin2hex(random_bytes(20)).'.'.$file->extension();
+                $dir=storage_path('app/demo-uploads'); if(!is_dir($dir)) mkdir($dir,0775,true);
+                abort_if(file_put_contents($dir.'/'.$stored,file_get_contents($file->getRealPath()))===false,500,'Berkas tidak dapat disimpan.');
+                $uploadedRequirements[]=['label'=>D::RELIEF_REQUIREMENT,'name'=>basename($file->getClientOriginalName()),'sample'=>false,'stored'=>$stored,'size'=>filesize($dir.'/'.$stored)];
+            }
         }
         $all=W::requests(); $id=(int)collect($all)->max('id')+1;
-        $r=array_merge(['email'=>null,'discount_reason'=>null],$data,['id'=>$id,'tracking'=>'DPR-'.date('Y').'-'.str_pad((string)$id,4,'0',STR_PAD_LEFT),'location_id'=>(int)$data['location_id'],'days'=>(int)$data['days'],'submitted'=>date('Y-m-d'),'status'=>'masuk','files'=>array_map(fn($v)=>['label'=>$v,'name'=>'contoh_'.str_replace(' ','_',strtolower($v)).'.pdf','sample'=>true],$requirements),'discount'=>$q->discount==='25'?'diajukan':'tidak_diajukan','discount_percent'=>0,'draft'=>'','version'=>1,'bill'=>null,'payment'=>null,'documents'=>[],'signed'=>false,'recipient'=>null,'completed'=>null,'history'=>[['at'=>date('Y-m-d H:i'),'role'=>$this->role(),'action'=>'Permohonan dicatat','note'=>'Berkas contoh digunakan dalam demo.']]]);
+        $r=array_merge(['email'=>null,'discount_reason'=>null],$data,['id'=>$id,'tracking'=>'DPR-'.date('Y').'-'.str_pad((string)$id,4,'0',STR_PAD_LEFT),'location_id'=>(int)$data['location_id'],'days'=>(int)$data['days'],'submitted'=>date('Y-m-d'),'status'=>'masuk','files'=>array_map(fn($v)=>['label'=>$v,'name'=>'contoh_'.str_replace(' ','_',strtolower($v)).'.pdf','sample'=>true],$requirements),'discount'=>$relief?'diajukan':'tidak_diajukan','relief'=>$relief==='free'?'pembebasan':($relief==='25'?'pengurangan':'normal'),'discount_percent'=>0,'draft'=>'','version'=>1,'bill'=>null,'payment'=>null,'documents'=>[],'signed'=>false,'recipient'=>null,'completed'=>null,'history'=>[['at'=>date('Y-m-d H:i'),'role'=>$this->role(),'action'=>'Permohonan dicatat','note'=>'Berkas contoh digunakan dalam demo.']]]);
+        if($relief&&!$uploadedRequirements) $r['files'][]=['label'=>D::RELIEF_REQUIREMENT,'name'=>'contoh_dokumen_pendukung_keringanan.pdf','sample'=>true];
         if($uploadedRequirements) { $r['files']=$uploadedRequirements; $r['history'][0]['note']='Berkas diunggah untuk demo lokal.'; }
         if(W::database()) { $r=app(BusinessStore::class)->create($r,W::actor()); $id=$r['id']; } else { $all[]=$r; session(['demo.requests'=>$all]); }
         } catch (\Throwable $e) {
@@ -211,7 +220,19 @@ class DemoController extends Controller
         switch($action) {
             case 'reject': $r['status']='ditolak'; $label='Permohonan ditolak'; break;
             case 'revise': $r['status']='draft'; $r['version']++; $label='Draft dikembalikan untuk revisi'; break;
-            case 'approve': $r['status']=['masuk'=>'draft','review_draft'=>'verifikasi','verifikasi'=>'rilis'][$from]; $label=['masuk'=>'Review berkas disetujui','review_draft'=>'Draft disetujui Kabid','verifikasi'=>'Draft diverifikasi Sekretaris'][$from]; break;
+            case 'approve':
+                $r['status']=['masuk'=>'draft','review_draft'=>'verifikasi','verifikasi'=>'rilis'][$from]; $label=['masuk'=>'Review berkas disetujui','review_draft'=>'Draft disetujui Kabid','verifikasi'=>'Draft diverifikasi Sekretaris'][$from];
+                if($from==='masuk'&&$r['discount']==='diajukan') {
+                    $q->validate(['relief_decision'=>'required|in:approve,reject']);
+                    $granted=$q->relief_decision==='approve';
+                    if(!$granted) $q->validate(['note'=>'required|string|min:5|max:2000']);
+                    $name=D::reliefName($r);
+                    $r['discount']=$granted?'disetujui':'ditolak';
+                    $r['discount_percent']=$granted?(($r['relief']??'')==='pembebasan'?100:25):0;
+                    $r['relief_note']=trim((string)$q->note)!==''?trim((string)$q->note):null;
+                    $label=$granted?'Review disetujui; '.mb_strtolower($name).' disetujui':'Review disetujui; '.mb_strtolower($name).' ditolak';
+                }
+                break;
             case 'save': case 'send':
                 if($q->has('letter')) {
                     $rules=['letter'=>'required|array'];
@@ -240,9 +261,14 @@ class DemoController extends Controller
                 } else { $q->validate(['draft'=>'required|string|min:30|max:15000']); $r['draft']=$q->draft; if(isset($r['letter'])) $r['letter']['body']=$q->draft; }
                 if($action==='send') $r['status']='review_draft';
                 $label=$action==='send'?'Draft dikirim ke Kabid':'Draft disimpan'; break;
-            case 'release': $r['status']='tagihan'; $r['documents'][]='Surat Persetujuan'; $label='Surat dirilis untuk proses retribusi'; break;
+            case 'release':
+                $r['documents'][]='Surat Persetujuan';
+                if(D::isFree($r)) { $r['status']='ttd'; $label='Surat dirilis; bebas biaya, retribusi dilewati'; }
+                else { $r['status']='tagihan'; $label='Surat dirilis untuk proses retribusi'; }
+                break;
             case 'save_assessment':
             case 'invoice':
+                abort_if(D::isFree($r),403,'Permohonan bebas biaya tidak memiliki penetapan retribusi.');
                 if(\App\Support\FinanceDocument::tariffMissing($r)) return back()->withErrors(['action'=>'Tarif belum ditetapkan untuk lokasi dan jenis kegiatan ini pada tanggal kegiatan. Minta admin menetapkannya di Data Master sebelum penetapan.']);
                 if(\App\Support\FinanceDocument::sourceChanges($r)) return back()->withErrors(['action'=>'Sumber SKRD berubah. Tinjau dan simpan template SKRD sebelum penerbitan.']);
                 if($action==='invoice'&&$r['discount']==='diajukan') return back()->withErrors(['action'=>'Keputusan keringanan belum tersedia. Penetapan ditunda. Gunakan contoh pengajuan yang sudah disetujui untuk demo diskon; kewenangan keputusan belum diasumsikan.']);
@@ -263,10 +289,11 @@ class DemoController extends Controller
                 $r['payment']=['date'=>$q->payment_date,'proof'=>$r['uploads']['proof']['name']??'bukti_pembayaran_contoh.pdf']; $r['status']='ttd';
                 $r['documents']=array_unique(array_merge($r['documents'],['STBP','STS'])); $label='Pembayaran demo dikonfirmasi; STBP dan STS demo dibuat'; break;
             case 'sign':
-                $q->validate(['confirmed'=>'accepted']); abort_unless($r['payment'],422); $r['signed']=true; $r['signature']=['name'=>W::database()?\Illuminate\Support\Facades\DB::table('pengguna')->where('pengguna_id',W::actor())->value('nama'):'Drs. Aditya Pratama (fiktif)','at'=>date('Y-m-d H:i'),'reference'=>'SIM-'.$r['tracking']]; $r['status']='serah'; $label='Simulasi tanda tangan selesai'; break;
+                $q->validate(['confirmed'=>'accepted']); abort_unless($r['payment']||D::isFree($r),422); $r['signed']=true; $r['signature']=['name'=>W::database()?\Illuminate\Support\Facades\DB::table('pengguna')->where('pengguna_id',W::actor())->value('nama'):'Drs. Aditya Pratama (fiktif)','at'=>date('Y-m-d H:i'),'reference'=>'SIM-'.$r['tracking']]; $r['status']='serah'; $label='Simulasi tanda tangan selesai'; break;
             case 'handover':
                 $q->validate(['confirmed'=>'accepted','recipient'=>'required|string|max:100']);
-                abort_unless($r['signed']&&count(array_intersect(['Surat Persetujuan','SKRD','STBP'],$r['documents']))===3,422);
+                $needed=D::isFree($r)?['Surat Persetujuan']:['Surat Persetujuan','SKRD','STBP'];
+                abort_unless($r['signed']&&count(array_intersect($needed,$r['documents']))===count($needed),422);
                 $r['recipient']=$q->recipient; $r['completed']=date('Y-m-d'); $r['status']='selesai'; $label='Dokumen diserahkan; permohonan selesai'; break;
         }
         $r['history'][]=['at'=>date('Y-m-d H:i'),'role'=>$this->role(),'action'=>$label,'note'=>$note]; $this->save($r);

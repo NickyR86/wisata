@@ -27,7 +27,7 @@ class FinanceDocument
         $draft=$r['templates']['skrd']['assessment']??[];
         $rate=$draft['rate']??$source['rate'];
         $subtotal=round($rate*$r['days'],2);
-        $percent=$r['discount']==='disetujui'&&$source['managed']?25:0;
+        $percent=$r['discount']==='disetujui'&&$source['managed']?(($r['relief']??'')==='pembebasan'?100:25):0;
         return ['rate'=>$rate,'subtotal'=>$subtotal,'percent'=>$percent,
             'total'=>$subtotal-round($subtotal*$percent/100,2),
             'note'=>$draft['note']??'Menggunakan tarif lokasi dan jenis kegiatan pada data master'];
