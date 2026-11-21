@@ -80,20 +80,13 @@ class DemoController extends Controller
     }
     public function logout(Request $q) { \App\Support\BrowserAccess::revoke($q); session()->invalidate(); session()->regenerateToken(); return redirect()->route('login'); }
     public function reset() { abort_if(config('siap.database_accounts')||W::database(),403,'Reset sesi tidak boleh menghapus database bersama.'); \App\Support\BrowserAccess::revoke(request()); session()->forget('demo'); return redirect()->route('login')->with('success','Seluruh data sesi demo telah dikembalikan ke contoh awal.'); }
-    public function dashboard(Request $q)
+    public function home()
     {
-        return match($this->role()) {
-            'kadis','admin' => redirect()->route('summary'),
-            'petugas' => redirect()->route('listing','draft'),
-            'sekretaris' => redirect()->route('listing','verifikasi'),
-            'bendahara' => redirect()->route('listing','retribusi'),
-            'kabid' => redirect()->route('listing',['kind'=>'antrean','mine'=>1]),
-            default => redirect()->route('listing','antrean'),
-        };
+        return redirect()->route('dashboard');
     }
-    public function summary()
+    public function dashboard()
     {
-        return $this->view('dashboard.index',['title'=>'Ringkasan Pelayanan','page'=>'ringkasan']);
+        return $this->view('dashboard.index',['title'=>'Dashboard','page'=>'dashboard']);
     }
     public function listing(Request $q,string $kind='antrean')
     {

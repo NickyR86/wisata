@@ -6,7 +6,7 @@ class FormRecovery
     public static function destination(mixed $value): ?string
     {
         if(!is_string($value)||preg_match('/[\\\\\x00-\x20]/',$value)) return null;
-        return preg_match('~^/(?:permohonan/baru|permohonan/\d+(?:/template/(?:skrd|sts|stbp))?|layanan/[a-z-]+|admin/(?:pengguna|lokasi)|ringkasan|kalender|laporan)(?:\?[a-zA-Z0-9_=&%-]*)?$~D',$value)?$value:null;
+        return preg_match('~^/(?:permohonan/baru|permohonan/\d+(?:/template/(?:skrd|sts|stbp))?|layanan/[a-z-]+|admin/(?:pengguna|lokasi)|dashboard|ringkasan|kalender|laporan)(?:\?[a-zA-Z0-9_=&%-]*)?$~D',$value)?$value:null;
     }
     public static function origin(Request $request): ?string
     {

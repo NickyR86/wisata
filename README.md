@@ -36,7 +36,7 @@ Jika hasil salinan tidak menyertakan folder kosong, buat `bootstrap/cache`, `sto
 
 - Layout sidebar/header dan navigasi responsif; komponen icon, badge status, tabel, dan pesan validasi.
 - Login demo dan tujuh role, dengan navigasi serta guard tindakan berdasarkan role/tahap.
-- Ringkasan, antrean, pencarian/filter/pagination, pendaftaran, detail, persyaratan contoh, dan riwayat.
+- Dashboard, antrean, pencarian/filter/pagination, pendaftaran, detail, persyaratan contoh, dan riwayat.
 - Penyusunan draft, review/revisi Kabid, verifikasi/revisi Sekretaris, rilis.
 - Penetapan SKRD; konfirmasi pembayaran contoh; STBP dan STS contoh.
 - Simulasi tanda tangan; serah terima dengan nama penerima; arsip.
@@ -85,14 +85,14 @@ app/Support/DemoData.php                  Fixture, status, role, format data
 resources/views/layouts/app.blade.php     Shell aplikasi bersama
 resources/views/components/              Komponen Blade yang dipakai ulang
 resources/views/auth/                    Login demo
-resources/views/dashboard/               Ringkasan
+resources/views/dashboard/               Dashboard
 resources/views/permohonan/              Daftar, form, detail, aksi kontekstual
 resources/views/dokumen/                 Template pratinjau dokumen
 resources/views/kalender/                Agenda
 resources/views/laporan/                 Rekap
 resources/views/admin/                   Profil pengguna dan tarif
 public/css/siptr-reference.css           CSS dari referensi SIPTR, termasuk Bootstrap
-public/css/siptr-blade.css               Adaptasi Blade dan layout Ringkasan
+public/css/siptr-blade.css               Adaptasi Blade dan layout Dashboard
 resources/icons.json                     Ikon SVG referensi
 public/js/app.js                         Interaksi form, estimasi, cetak
 public/vendor/bootstrap/                 Bootstrap 5.3.8 lokal beserta lisensi
@@ -112,22 +112,13 @@ Lihat `PANDUAN-PENYERAHAN.md` untuk ringkasan yang dapat diberikan ke rekan/dose
 
 Login memakai font Google Fonts dan foto pantai dari URL pada referensi; keduanya membutuhkan internet. Jika tidak tersedia, font fallback dan latar teal tetap digunakan.
 
-## Ringkasan dan Antrean
+## Dashboard dan Antrean
 
-Identitas visual mengikuti referensi SIPTR: warna, tipografi, ikon, sidebar, dan kontrol. Ringkasan dipisahkan untuk pemantauan SLA, sebaran tahap, agenda, dan pembayaran. Antrean berfokus pada pencarian, filter, dan penanganan permohonan tanpa banner besar. Kartu Ringkasan membuka daftar terkait.
+Identitas visual mengikuti referensi SIPTR: warna, tipografi, ikon, sidebar, dan kontrol. Dashboard dipisahkan untuk pemantauan SLA, sebaran tahap, agenda, dan pembayaran. Antrean berfokus pada pencarian, filter, dan penanganan permohonan tanpa banner besar. Kartu Dashboard membuka daftar terkait.
 
-Halaman awal setelah masuk atau berganti peran:
+Setelah masuk atau berganti peran, semua peran diarahkan ke Dashboard. Antrean kerja masing-masing peran dibuka dari tombol "Buka tugas saya" di Dashboard.
 
-| Peran | Halaman awal |
-|---|---|
-| Sekretariat | Antrean Permohonan |
-| Kepala Bidang | Antrean dengan filter perlu tindakan saya |
-| Petugas Layanan | Editor draft |
-| Sekretaris | Verifikasi draft |
-| Bendahara | Retribusi dan pembayaran |
-| Kepala Dinas, Admin | Ringkasan |
-
-Ringkasan tetap tersedia untuk semua peran. Pada layar kecil, menu Lainnya membuka seluruh navigasi sesuai peran. Pengaturan tampilan ini tidak mengubah aturan potongan 25%, urutan proses, atau perhitungan SLA.
+Dashboard tersedia untuk semua peran; alamat lama `/ringkasan` tetap diarahkan ke `/dashboard`. Pada layar kecil, menu Lainnya membuka seluruh navigasi sesuai peran. Pengaturan tampilan ini tidak mengubah aturan potongan 25%, urutan proses, atau perhitungan SLA.
 
 ## Pembaruan detail dan retribusi — 18 Oktober 2026
 

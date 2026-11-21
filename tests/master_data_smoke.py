@@ -43,7 +43,7 @@ class Session:
         tok = re.search(r'name="_token"\s+value="([^"]+)"', body)
         payload = urllib.parse.urlencode({'_token': tok.group(1) if tok else '', 'nip': user, 'password': pw, 'login_form': '1'}).encode()
         self._do(urllib.request.Request(BASE + '/demo/masuk', data=payload))
-        st, url, body = self.get('/ringkasan')
+        st, url, body = self.get('/dashboard')
         return st == 200 and not url.rstrip('/').endswith('/login')
 
 

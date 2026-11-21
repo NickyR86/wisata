@@ -22,8 +22,10 @@ Route::get('/akses/status',function () {
     return response()->json(['authenticated'=>(bool)$role,'role'=>$role,'identity'=>config('siap.database_accounts')?'account:'.session('account_id'):'demo:'.$role,'token'=>csrf_token()])->header('Cache-Control','no-store, private');
 })->name('access.status');
 Route::middleware(\App\Http\Middleware\DemoSession::class)->group(function() {
-    Route::get('/',[DemoController::class,'dashboard'])->name('dashboard');
-    Route::get('/ringkasan',[DemoController::class,'summary'])->name('summary');
+    Route::get('/',[DemoController::class,'home'])->name('home');
+    Route::get('/dashboard',[DemoController::class,'dashboard'])->name('dashboard');
+    // Tautan lama tetap berfungsi.
+    Route::redirect('/ringkasan','/dashboard')->name('summary');
     Route::post('/demo/keluar',[DemoController::class,'logout'])->name('demo.logout');
     Route::post('/demo/reset',[DemoController::class,'reset'])->name('demo.reset');
     Route::get('/permohonan/baru',[DemoController::class,'create'])->name('permohonan.create');

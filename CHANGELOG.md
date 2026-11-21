@@ -53,6 +53,11 @@ resmi di produksi (lihat bagian "Belum dikerjakan").
 **Diubah**: nama persyaratan mengikuti formulir fisik dinas.
 **Dampak**: wajib `php artisan migrate`.
 
+## Perubahan kecil: login ke Dashboard
+**Diubah**: setelah login semua peran langsung diarahkan ke halaman **Dashboard** (sebelumnya tiap peran ke antrean kerjanya masing-masing). Halaman "Ringkasan" diganti nama menjadi **Dashboard** (menu, judul, alamat `/dashboard`). Alamat lama `/ringkasan` tetap berfungsi dan diarahkan ke `/dashboard`. Antrean kerja peran dibuka dari tombol "Buka tugas saya" di Dashboard.
+**Teknis**: rute `/` (nama `home`) hanya mengalihkan ke `/dashboard`; nama rute `dashboard` kini menunjuk halaman Dashboard; `FormRecovery` menerima `return_to` ke `/dashboard`; tes `demo_smoke.py`, `security_baseline_smoke.py`, `master_data_smoke.py` diperbarui.
+**Dampak**: tidak ada migrasi. Tombol/tautan yang memakai nama rute `summary` tetap bekerja (rute alihan).
+
 ## Belum dikerjakan (menunggu keputusan atau tahap berikutnya)
 | Kode | Isi | Menunggu |
 |---|---|---|

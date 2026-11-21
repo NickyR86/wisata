@@ -6,7 +6,7 @@
 @php
 $roles=['sekretariat'=>'Sekretariat','kabid'=>'Kepala Bidang','petugas'=>'Petugas Layanan Bidang','sekretaris'=>'Sekretaris','bendahara'=>'Bendahara Penerimaan','kadis'=>'Kepala Dinas','admin'=>'Admin'];
 $short=['sekretariat'=>'Sekretariat','kabid'=>'Kabid','petugas'=>'Petugas Layanan','sekretaris'=>'Sekretaris','bendahara'=>'Bendahara','kadis'=>'Kadis','admin'=>'Admin'];
-$nav=[['ringkasan','Ringkasan','bar-chart-3',route('summary')],['antrean','Antrean Permohonan','layout-list',route('listing','antrean')]];
+$nav=[['dashboard','Dashboard','bar-chart-3',route('dashboard')],['antrean','Antrean Permohonan','layout-list',route('listing','antrean')]];
 if($role==='sekretariat') $nav[]=['baru','Permohonan Baru','file-plus-2',route('permohonan.create')];
 if($role==='petugas') $nav[]=['draft','Editor Draft Surat','pen-line',route('listing','draft')];
 if($role==='sekretaris') $nav[]=['verifikasi','Verifikasi Draft','badge-check',route('listing','verifikasi')];
@@ -18,7 +18,7 @@ $nav=array_merge($nav,[['arsip','Arsip Digital','archive',route('listing','arsip
 if(in_array($role,['kadis','admin'])) $nav[]=['laporan','Statistik & Laporan','bar-chart-3',route('laporan')];
 $nav[]=['riwayat','Log & Riwayat','history',route('listing','riwayat')];
 if($role==='admin') $nav=array_merge($nav,[['pengguna','Kelola User & Role','users',route('pengguna')],['master','Data Master','database',route('master')]]);
-$titles=['pratinjau'=>'Pratinjau Dokumen','ringkasan'=>'Ringkasan Pelayanan','antrean'=>'Antrean Permohonan','dashboard'=>'Antrean Permohonan','baru'=>'Permohonan Baru','detail'=>'Detail Permohonan','draft'=>'Editor Draft Surat','verifikasi'=>'Verifikasi Draft Surat','rilis'=>'Rilis Surat Persetujuan','retribusi'=>'Penetapan & Pembayaran Retribusi','tanda-tangan'=>'Tanda Tangan Digital','serah-terima'=>'Serah Terima & Pengambilan Berkas','arsip'=>'Arsip Digital','kalender'=>'Kalender Jadwal','riwayat'=>'Log & Riwayat','pengguna'=>'Kelola User & Role','master'=>'Data Master','laporan'=>'Statistik & Laporan'];
+$titles=['pratinjau'=>'Pratinjau Dokumen','dashboard'=>'Dashboard','antrean'=>'Antrean Permohonan','baru'=>'Permohonan Baru','detail'=>'Detail Permohonan','draft'=>'Editor Draft Surat','verifikasi'=>'Verifikasi Draft Surat','rilis'=>'Rilis Surat Persetujuan','retribusi'=>'Penetapan & Pembayaran Retribusi','tanda-tangan'=>'Tanda Tangan Digital','serah-terima'=>'Serah Terima & Pengambilan Berkas','arsip'=>'Arsip Digital','kalender'=>'Kalender Jadwal','riwayat'=>'Log & Riwayat','pengguna'=>'Kelola User & Role','master'=>'Data Master','laporan'=>'Statistik & Laporan'];
 $activePage=($page??'')==='dashboard'||($page??'')==='detail'?'antrean':($page??'');
 @endphp
 <a class="visually-hidden-focusable" href="#main">Lewati navigasi</a>

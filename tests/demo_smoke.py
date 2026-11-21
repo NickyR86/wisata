@@ -61,13 +61,15 @@ def role(name):
     return request('/demo/masuk',{'role':name})[0]
 
 request('/login')
-# Landing pages depend on the role; monitoring and work queues remain separate.
-for name,landing in [('sekretariat','/layanan/antrean'),('kabid','/layanan/antrean?mine=1'),('petugas','/layanan/draft'),('sekretaris','/layanan/verifikasi'),('bendahara','/layanan/retribusi'),('kadis','/ringkasan'),('admin','/ringkasan')]:
+# Setelah login semua peran masuk ke Dashboard; antrean kerja dibuka dari tombol di Dashboard.
+for name in ['sekretariat','kabid','petugas','sekretaris','bendahara','kadis','admin']:
     body,url=request('/demo/masuk',{'role':name})
-    assert url.endswith(landing), (name,url,landing)
-    summary,_=request('/ringkasan')
+    assert url.endswith('/dashboard'), (name,url)
+    summary,_=request('/dashboard')
     assert 'Kondisi pelayanan hari ini' in summary and 'Sebaran tahap pelayanan' in summary
     assert ('Ringkasan retribusi' in summary) == (name in ['bendahara','kadis','admin'])
+    _body,final=request('/ringkasan')
+    assert final.endswith('/dashboard'), 'Tautan lama /ringkasan harus diarahkan ke /dashboard'
 role('sekretariat')
 for query,expected in [('overdue','Melewati'),('due','Batas')]:
     body,_=request('/layanan/antrean?sla='+query)

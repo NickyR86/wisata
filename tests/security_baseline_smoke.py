@@ -86,11 +86,11 @@ print('\n[3] Login demo tanpa kata sandi')
 tok = token(html)
 check('token CSRF ditemukan di form login', bool(tok))
 st, url, h, body = post('/demo/masuk', {'_token': tok, 'role': 'admin', 'nip': '198703122010011002', 'password': 'apa-saja', 'login_form': '1'} if not ACCOUNTS else {'_token': tok, 'nip': 'tidak-ada', 'password': 'salah-salah-salah', 'login_form': '1'})
-st2, url2, h2, body2 = get('/ringkasan')
+st2, url2, h2, body2 = get('/dashboard')
 if DEMO_ALLOWED:
-    check('lokal: login demo berhasil, /ringkasan = 200', st2 == 200 and not url2.rstrip('/').endswith('/login'), f'{st2} {url2}')
+    check('lokal: login demo berhasil, /dashboard = 200', st2 == 200 and not url2.rstrip('/').endswith('/login'), f'{st2} {url2}')
 else:
-    check('login demo tanpa sandi DITOLAK: /ringkasan kembali ke /login', url2.rstrip('/').endswith('/login'), f'{st2} {url2}')
+    check('login demo tanpa sandi DITOLAK: /dashboard kembali ke /login', url2.rstrip('/').endswith('/login'), f'{st2} {url2}')
     check('pesan penolakan tampil atau halaman login dimuat ulang', st in (200, 302, 422) )
 
 if DEMO_ALLOWED and st2 == 200:
