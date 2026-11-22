@@ -69,16 +69,31 @@ resmi di produksi (lihat bagian "Belum dikerjakan").
 **Asumsi menunggu konfirmasi**: lokasi di luar Dispar tidak dikenai retribusi.
 **Dampak**: wajib `php artisan migrate`; sesi demo lama perlu direset.
 
-## Belum dikerjakan (menunggu keputusan atau tahap berikutnya)
-| Kode | Isi | Menunggu |
+## Belum dikerjakan
+
+### Tahap berikutnya (usulan)
+| Tahap | Isi | Rujukan |
 |---|---|---|
-| T-2 | Migrasi hanya MariaDB/MySQL; contoh `.env` default SQLite | Keputusan mesin database produksi |
-| T-4 | Ekspor/cadangan terbuka untuk semua peran | Kebijakan peran yang boleh mengunduh |
-| T-5 | Pemuatan semua permohonan berulang (mode database) | Pengukuran di mesin ber-PHP |
-| - | Kolom lokasi pada ekspor CSV | Tahap tersendiri |
-| T-11 | Tanda tangan simulasi, kirim ulang tagihan simulasi | Keputusan alur tanda tangan produksi |
-| T-12 | (sisa) Data resmi tarif dan lokasi perlu diinput admin lewat menu | Data resmi dari dinas |
-| - | Tahap 6: persyaratan sesuai lembar periksa fisik (jasa impresariat/promotor PTSP bersyarat, KTP, rekomendasi DLH bersyarat) dan cetak lembar periksa | Konfirmasi daftar dari dinas |
-| - | Layar verifikasi per berkas oleh petugas dan nama pejabat otomatis di lembar periksa | Tahap tersendiri |
-| - | Watermark "DEMO - BUKAN DOKUMEN RESMI" pada dokumen produksi, tanda tangan simulasi | Alur tanda tangan produksi dan template resmi |
-| - | Kalender berwarna per tahap dan nama pelaku pada riwayat dari cabang biru | Tahap tersendiri |
+| Uji | Menjalankan semua tahap di komputer ber-PHP dan MySQL (`migrate`, seluruh `tests/`, dicoba di browser) dan memperbaiki hasilnya | Belum ada tahap yang pernah dijalankan |
+| 9 | Hardening produksi: hapus watermark "DEMO" dan tanda tangan simulasi, batasi ekspor/cadangan per peran, rapikan migrasi untuk MySQL, CSP mode enforce, pembatasan laju endpoint lain, performa mode database | T-2, T-4, T-5, T-11 |
+| 10 | Kenyamanan dan konsistensi: kompres gambar login (8,9 MB), tampilan ponsel, aksesibilitas, penyamaan istilah dan format | - |
+| 11 | Sisa fitur: layar verifikasi per berkas oleh petugas, nama pelaku di riwayat, kalender berwarna per tahap, kolom lokasi di ekspor CSV, estimasi form mengikuti jenis kegiatan dan keringanan | - |
+| Akhir | Daftar pengecekan detail untuk website yang sudah jadi | Diminta pemilik |
+
+### Menunggu keputusan pemilik
+| Pertanyaan | Dampak |
+|---|---|
+| Kabid pemutus bebas biaya dan keringanan? (asumsi: ya) | Tahap 5 |
+| STBP tidak terbit pada bebas biaya? (asumsi: ya) | Tahap 5 |
+| Lokasi di luar Dispar tanpa retribusi? (asumsi: ya) | Tahap 8 |
+| Dokumen khusus untuk lokasi di luar Dispar? | Persyaratan form |
+| Tarif per lokasi saja atau per jenis kegiatan? | Data Master dan estimasi form |
+| Mesin database produksi (MySQL atau MariaDB, versi) | T-2 |
+| Kadis ikut meninjau draft surat? | Alur |
+| Prosedur bila surat salah setelah ditandatangani | Alur |
+| Alamat pemohon dijadikan wajib? Tarif Rp 0 untuk lokasi Dispar diberi peringatan? | Form dan Data Master |
+| Alur tanda tangan produksi (tanda tangan basah atau elektronik) | T-11 |
+| Siapa yang boleh "tetap daftarkan" saat jadwal bentrok | Tahap 7 |
+
+### Menunggu data resmi dinas
+Format penomoran dokumen, bank dan rekening, nama/pangkat/NIP penandatangan, NPWRD, tarif dan lokasi resmi, template surat resmi.
