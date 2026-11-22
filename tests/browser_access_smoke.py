@@ -20,7 +20,7 @@ os.environ['SESSION_LIFETIME']='120'
 assert after['authenticated'] and after['identity']==before['identity']
 assert after['token']!=stale
 data={'name':'Uji pemulihan sesi','pic':'Penguji','phone':'0800000000',
-      'activity':'Bazar UMKM','location_id':'1','date':(dt.date.today()+dt.timedelta(days=20)).isoformat(),'days':'1','files':'1'}
+      'activity':'Bazar UMKM','location_id':'1','date':(dt.date.today()+dt.timedelta(days=78)).isoformat(),'days':'1','files':'1'}
 token=stale
 body,_=request('/permohonan',data,expected=419)
 assert 'Pengiriman belum diproses' in body

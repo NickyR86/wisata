@@ -94,7 +94,7 @@ request('/permohonan/238/template/skrd',expected=403)
 request('/permohonan/237/berkas/proof',expected=403)
 body,_=request('/permohonan/238');assert 'RETRIBUSI</span>' in body
 assert 'DPR-' in body and 'Berkas Persyaratan (4)' in body and 'permit-progress' in body
-form={'name':'Yayasan Uji Berkas','pic':'PIC contoh','phone':'0800','activity':'Festival budaya','location_id':'1','date':(dt.date.today()+dt.timedelta(days=30)).isoformat(),'days':'1'}
+form={'name':'Yayasan Uji Berkas','pic':'PIC contoh','phone':'0800','activity':'Festival budaya','location_id':'1','date':(dt.date.today()+dt.timedelta(days=81)).isoformat(),'days':'1'}
 body,url=request('/permohonan',form,files={f'requirements.{i}':file for i in range(4)})
 id=int(url.rsplit('/',1)[-1]);assert 'Lihat berkas' in body
 body,_=request(f'/permohonan/{id}/berkas/requirement-0');assert body.startswith('%PDF')

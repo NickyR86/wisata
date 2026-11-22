@@ -203,3 +203,22 @@ document.addEventListener('change', event => {
     const control = event.target && event.target.closest ? event.target.closest('[data-autosubmit]') : null;
     if (control && control.form) control.form.requestSubmit();
 });
+
+(() => {
+    const loc = document.getElementById('location'), date = document.getElementById('date'), days = document.getElementById('days');
+    const box = document.getElementById('conflictBox'), text = document.getElementById('conflictText'), data = document.getElementById('occupiedData');
+    if (!loc || !date || !days || !box || !text || !data) return;
+    let occupied = []; try { occupied = JSON.parse(data.textContent); } catch (e) { occupied = []; }
+    const addDays = (value, n) => { const d = new Date(value + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
+    function sync() {
+        const id = Number(loc.value);
+        if (!id || !date.value) { box.hidden = true; return; }
+        const end = addDays(date.value, Math.max(0, (parseInt(days.value || '1', 10) || 1) - 1));
+        const hits = occupied.filter(o => o.loc === id && o.from <= end && o.to >= date.value);
+        box.hidden = hits.length === 0;
+        if (hits.length) text.textContent = 'Sudah ada kegiatan pada rentang tanggal ini: ' + hits.slice(0, 3).map(h => h.code + ' (' + h.who + ')').join(', ') + '.';
+    }
+    [loc, date, days].forEach(el => el.addEventListener('change', sync));
+    days.addEventListener('input', sync);
+    sync();
+})();

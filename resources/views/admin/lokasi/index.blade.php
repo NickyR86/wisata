@@ -2,7 +2,6 @@
 @section('content')
 @php($db=\App\Support\Workspace::database())
 <div class="page-heading"><div><span class="eyebrow">DATA MASTER</span><h1>Lokasi, Kegiatan & Tarif</h1><p>{{ $db?'Data di sini muncul otomatis di formulir Permohonan Baru. Lokasi yang sudah dipakai permohonan tidak dapat dihapus, hanya dinonaktifkan.':'Tarif di bawah adalah contoh untuk presentasi, bukan tarif resmi Dispar.' }}</p></div>@unless($db)<span class="demo-tag">DATA CONTOH</span>@endunless</div>
-@if($errors->any())<div class="alert alert-danger mb-3" role="alert">@foreach($errors->all() as $message)<div>{{ $message }}</div>@endforeach</div>@endif
 @unless($db)<div class="alert alert-warning mb-3" role="status">Mode demo: hanya tarif contoh yang dapat diubah. Menambah atau mengubah lokasi dan jenis kegiatan tersedia pada mode database.</div>@endunless
 
 @if($db)

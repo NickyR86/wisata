@@ -30,7 +30,7 @@ def role(name,new_session=False):
  request('/login');return request('/demo/masuk',{'role':name})
 
 role('sekretariat',True)
-body,url=request('/permohonan',{'name':'Yayasan Uji Database Lintas Sesi','pic':'Rani Uji','phone':'080000000','email':'uji@example.test','address':'Alamat pengujian','activity':'Festival budaya','location_id':1,'date':(dt.date.today()+dt.timedelta(days=30)).isoformat(),'days':2,'files':1})
+body,url=request('/permohonan',{'name':'Yayasan Uji Database Lintas Sesi','pic':'Rani Uji','phone':'080000000','email':'uji@example.test','address':'Alamat pengujian','activity':'Festival budaya','location_id':1,'date':(dt.date.today()+dt.timedelta(days=79)).isoformat(),'days':2,'files':1})
 id=int(url.rsplit('/',1)[-1]);action=f'/permohonan/{id}/aksi'
 request(action,{'action':'approve'},403)
 role('kabid',True);body,_=request(f'/permohonan/{id}');assert 'Yayasan Uji Database Lintas Sesi' in body

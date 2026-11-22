@@ -151,6 +151,9 @@ class DemoController extends Controller
         $uploadedRequirements=[];
         $loc=collect(W::locations())->firstWhere('id',(int)$data['location_id']);
         $requirements=\App\Support\PermitRequirements::forLocation($loc);
+        $all=W::requests();
+        $conflicts=D::conflicts($all,['location_id'=>(int)$data['location_id'],'date'=>$data['date'],'days'=>(int)$data['days']]);
+        if($conflicts&&!$q->boolean('ignore_conflict')) return back()->withErrors(['conflict'=>'Jadwal bentrok dengan '.implode('; ',array_map(fn($c)=>$c['tracking'].' ('.D::date($c['date']).', '.$c['days'].' hari, '.(D::STATUS[$c['status']]??$c['status']).')',$conflicts)).'. Ubah tanggal atau lokasi, atau centang "Tetap daftarkan" bila bentrok sudah disadari.'])->withInput();
         $relief=in_array($q->discount,['25','free'],true)?$q->discount:null;
         if($relief&&!$loc['managed']) return back()->withErrors(['discount'=>'Keringanan atau bebas biaya hanya dapat diajukan untuk lokasi yang dikelola Dispar.'])->withInput();
         try {
@@ -177,9 +180,10 @@ class DemoController extends Controller
                 $uploadedRequirements[]=['label'=>D::RELIEF_REQUIREMENT,'name'=>basename($file->getClientOriginalName()),'sample'=>false,'stored'=>$stored,'size'=>filesize($dir.'/'.$stored)];
             }
         }
-        $all=W::requests(); $id=(int)collect($all)->max('id')+1;
+        $id=(int)collect($all)->max('id')+1;
         $r=array_merge(['email'=>null,'discount_reason'=>null],$data,['id'=>$id,'tracking'=>'DPR-'.date('Y').'-'.str_pad((string)$id,4,'0',STR_PAD_LEFT),'location_id'=>(int)$data['location_id'],'days'=>(int)$data['days'],'submitted'=>date('Y-m-d'),'status'=>'masuk','files'=>array_map(fn($v)=>['label'=>$v,'name'=>'contoh_'.str_replace(' ','_',strtolower($v)).'.pdf','sample'=>true],$requirements),'discount'=>$relief?'diajukan':'tidak_diajukan','relief'=>$relief==='free'?'pembebasan':($relief==='25'?'pengurangan':'normal'),'discount_percent'=>0,'draft'=>'','version'=>1,'bill'=>null,'payment'=>null,'documents'=>[],'signed'=>false,'recipient'=>null,'completed'=>null,'history'=>[['at'=>date('Y-m-d H:i'),'role'=>$this->role(),'action'=>'Permohonan dicatat','note'=>'Berkas contoh digunakan dalam demo.']]]);
         if($relief&&!$uploadedRequirements) $r['files'][]=['label'=>D::RELIEF_REQUIREMENT,'name'=>'contoh_dokumen_pendukung_keringanan.pdf','sample'=>true];
+        if($conflicts) $r['history'][0]['note']=trim(($r['history'][0]['note']??'').' Jadwal bentrok disadari: '.implode(', ',array_column($conflicts,'tracking')).'.');
         if($uploadedRequirements) { $r['files']=$uploadedRequirements; $r['history'][0]['note']='Berkas diunggah untuk demo lokal.'; }
         if(W::database()) { $r=app(BusinessStore::class)->create($r,W::actor()); $id=$r['id']; } else { $all[]=$r; session(['demo.requests'=>$all]); }
         } catch (\Throwable $e) {

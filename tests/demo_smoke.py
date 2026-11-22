@@ -81,7 +81,7 @@ for page in ['/','/layanan/antrean','/layanan/arsip','/layanan/riwayat','/kalend
     request(page)
 request('/admin/lokasi',expected=403)
 today=dt.date.today()
-body,url=request('/permohonan',{'name':'Yayasan Uji Alur','pic':'PIC Demo','phone':'0800000000','email':'demo@example.test','activity':'Festival budaya','location_id':'1','date':(today+dt.timedelta(days=35)).isoformat(),'days':'2','files':'1'})
+body,url=request('/permohonan',{'name':'Yayasan Uji Alur','pic':'PIC Demo','phone':'0800000000','email':'demo@example.test','activity':'Festival budaya','location_id':'1','date':(today+dt.timedelta(days=70)).isoformat(),'days':'2','files':'1'})
 record_id=int(url.rsplit('/',1)[-1])
 action_path=f'/permohonan/{record_id}/aksi'
 request(action_path,{'action':'approve'},expected=403)
@@ -174,6 +174,23 @@ for name,act,data in [('petugas','send',{'draft':draft}),('kabid','approve',{}),
 role('bendahara')
 body,_=request(path,{'action':'invoice'})
 assert 'Rp 500.000' in body, 'Keringanan ditolak: tagihan harus memakai tarif normal'
+# Cek bentrok jadwal pada lokasi yang sama.
+role('sekretariat')
+base=(today+dt.timedelta(days=90)).isoformat(); overlap=(today+dt.timedelta(days=91)).isoformat(); apart=(today+dt.timedelta(days=100)).isoformat()
+form=lambda name,loc,date,days='1',**extra: dict({'name':name,'pic':'PIC','phone':'0800','activity':'Festival budaya','location_id':loc,'date':date,'days':days,'files':'1'},**extra)
+body,url=request('/permohonan',form('Uji Bentrok Pertama','2',base,'3')); first=int(url.rsplit('/',1)[-1])
+body,_=request('/permohonan/baru'); assert 'occupiedData' in body and 'conflictBox' in body and 'Uji Bentrok Pertama' in body
+try:
+    body,_=request('/permohonan',form('Uji Bentrok Kedua','2',overlap)); assert 'Jadwal bentrok' in body
+except AssertionError as error:
+    assert '405' in str(error), error   # sebagian harness kembali ke /permohonan (GET tidak ada): 405
+body,_=request('/layanan/antrean'); assert 'Uji Bentrok Kedua' not in body, 'Pendaftaran bentrok tanpa persetujuan harus ditolak'
+body,url=request('/permohonan',form('Uji Bentrok Kedua','2',overlap,ignore_conflict='1')); second=int(url.rsplit('/',1)[-1])
+body,_=request(f'/permohonan/{second}'); assert 'bentrok disadari' in body.lower(), 'Riwayat harus mencatat bentrok yang disadari'
+body,url=request('/permohonan',form('Uji Lokasi Lain Sama Tanggal','1',overlap)); assert '/permohonan/' in url
+body,url=request('/permohonan',form('Uji Tanggal Berbeda','2',apart)); assert '/permohonan/' in url
+body,_=request('/kalender?month='+(today+dt.timedelta(days=91)).strftime('%Y-%m'))
+assert 'Bentrok jadwal' in body and 'cal-conflict' in body, 'Kalender harus menandai bentrok jadwal'
 request('/demo/reset',{})
 print(f'PASS: {checks} request checks; seven roles, lifecycle, revision, guards, archive, document preview, frozen invoice, relief decided at first review (25% approved, free, rejected).')
 

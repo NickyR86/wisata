@@ -58,6 +58,12 @@ resmi di produksi (lihat bagian "Belum dikerjakan").
 **Teknis**: rute `/` (nama `home`) hanya mengalihkan ke `/dashboard`; nama rute `dashboard` kini menunjuk halaman Dashboard; `FormRecovery` menerima `return_to` ke `/dashboard`; tes `demo_smoke.py`, `security_baseline_smoke.py`, `master_data_smoke.py` diperbarui.
 **Dampak**: tidak ada migrasi. Tombol/tautan yang memakai nama rute `summary` tetap bekerja (rute alihan).
 
+## Tahap 7: Cek bentrok jadwal (`docs/TAHAP-7-BENTROK-JADWAL.md`)
+**Ditambah**: peringatan langsung di form, penolakan server untuk lokasi dan tanggal yang beririsan (dengan opsi "tetap daftarkan" yang tercatat di riwayat), dan penanda bentrok di kalender.
+**Diperbaiki**: perhitungan tanggal peringatan memakai UTC; pesan error Data Master tidak lagi tampil dobel.
+**Diubah (tes)**: tanggal pendaftaran di lima tes digeser agar tidak bentrok dengan data contoh.
+**Dampak**: tidak ada migrasi.
+
 ## Belum dikerjakan (menunggu keputusan atau tahap berikutnya)
 | Kode | Isi | Menunggu |
 |---|---|---|
@@ -67,8 +73,7 @@ resmi di produksi (lihat bagian "Belum dikerjakan").
 | T-11 | Tanda tangan simulasi, kirim ulang tagihan simulasi | Keputusan alur tanda tangan produksi |
 | T-12 | (sisa) Data resmi tarif dan lokasi perlu diinput admin lewat menu | Data resmi dari dinas |
 | - | Tahap 6: persyaratan sesuai lembar periksa fisik (jasa impresariat/promotor PTSP bersyarat, KTP, rekomendasi DLH bersyarat) dan cetak lembar periksa | Konfirmasi daftar dari dinas |
-| - | Tahap 7: cek bentrok jadwal dari cabang biru | - |
 | - | Layar verifikasi per berkas oleh petugas dan nama pejabat otomatis di lembar periksa | Tahap tersendiri |
-| - | Tahap 8: lokasi di luar master (input manual) | Keputusan kebijakan retribusi untuk lokasi non-Dispar |
+| - | Tahap 8 (berikutnya): lokasi di luar master (input manual) | Keputusan kebijakan retribusi untuk lokasi non-Dispar |
 | - | Watermark "DEMO - BUKAN DOKUMEN RESMI" pada dokumen produksi, tanda tangan simulasi | Alur tanda tangan produksi dan template resmi |
-| - | Kalender berwarna dan nama pelaku dari cabang biru | Tahap tersendiri |
+| - | Kalender berwarna per tahap dan nama pelaku pada riwayat dari cabang biru | Tahap tersendiri |

@@ -26,6 +26,24 @@ class DemoData
     public const ACTIVITIES = ['Festival budaya', 'Seminar / workshop', 'Bazar UMKM', 'Kegiatan olahraga', 'Fotografi / prewedding', 'Konser / pertunjukan'];
     public const RELIEF_REQUIREMENT = 'Dokumen pendukung keringanan';
     /** Bebas biaya yang sudah disetujui: tidak ada SKRD, STS, STBP, maupun bukti transfer. */
+    /** Tanggal terakhir kegiatan (YYYY-MM-DD). */
+    public static function endDate(array $r): string
+    {
+        return (new \DateTimeImmutable($r['date']))->modify('+'.max(0,(int)$r['days']-1).' days')->format('Y-m-d');
+    }
+    /**
+     * Permohonan lain yang jadwalnya beririsan di lokasi yang sama.
+     * Yang ditolak atau dihapus sementara tidak menempati lokasi.
+     */
+    public static function conflicts(array $all,array $cand,?int $ignoreId=null): array
+    {
+        $from=$cand['date']; $to=self::endDate($cand); $out=[];
+        foreach($all as $r){
+            if(($ignoreId&&$r['id']===$ignoreId)||!empty($r['deleted_at'])||$r['status']==='ditolak'||(int)$r['location_id']!==(int)$cand['location_id']) continue;
+            if($r['date']<=$to&&self::endDate($r)>=$from) $out[]=$r;
+        }
+        return $out;
+    }
     public static function isFree(array $r): bool { return ($r['relief']??'')==='pembebasan' && ($r['discount']??'')==='disetujui'; }
     public static function reliefName(array $r): string { return ($r['relief']??'')==='pembebasan' ? 'Bebas biaya' : 'Keringanan 25%'; }
     // Daftar persyaratan mengikuti lembar periksa kelengkapan dinas.
