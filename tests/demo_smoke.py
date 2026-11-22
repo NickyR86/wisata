@@ -191,6 +191,31 @@ body,url=request('/permohonan',form('Uji Lokasi Lain Sama Tanggal','1',overlap))
 body,url=request('/permohonan',form('Uji Tanggal Berbeda','2',apart)); assert '/permohonan/' in url
 body,_=request('/kalender?month='+(today+dt.timedelta(days=91)).strftime('%Y-%m'))
 assert 'Bentrok jadwal' in body and 'cal-conflict' in body, 'Kalender harus menandai bentrok jadwal'
+# Lokasi di luar Dispar: nama dan alamat diisi manual, tanpa retribusi, tanpa pemeriksaan bentrok.
+role('sekretariat')
+od=(today+dt.timedelta(days=110)).isoformat()
+other_form=lambda name,**extra: dict({'name':name,'pic':'PIC','phone':'0800','activity':'Festival budaya','location_id':'5','location_other_name':'Aula Desa Contoh','location_other_address':'Jl. Contoh No. 1, Pangkalpinang','date':od,'days':'1','files':'1'},**extra)
+body,_=request('/permohonan/baru'); assert 'Lainnya (di luar lokasi Dispar)' in body and 'otherLocationBox' in body
+body,url=request('/permohonan',other_form('Uji Lokasi Lain Pertama')); other=int(url.rsplit('/',1)[-1])
+body,_=request(f'/permohonan/{other}'); assert 'Aula Desa Contoh' in body and 'Jl. Contoh No. 1' in body
+body,url=request('/permohonan',other_form('Uji Lokasi Lain Kedua')); assert '/permohonan/' in url, 'Lokasi di luar Dispar tidak boleh diperiksa bentrok'
+for label,form_data in [('Uji Lokasi Lain Tanpa Nama',dict(other_form('Uji Lokasi Lain Tanpa Nama'),location_other_name='')),('Uji Lokasi Lain Keringanan',dict(other_form('Uji Lokasi Lain Keringanan'),discount='25',discount_reason='Dasar contoh uji.'))]:
+    try:
+        request('/permohonan',form_data)
+    except AssertionError as error:
+        assert '405' in str(error), error
+    body,_=request('/layanan/antrean'); assert label not in body, label+' harus ditolak'
+path=f'/permohonan/{other}/aksi'
+role('kabid'); request(path,{'action':'approve'})
+for name,act,data in [('petugas','send',{'draft':draft}),('kabid','approve',{}),('sekretaris','approve',{}),('kabid','release',{})]:
+    role(name); request(path,dict(action=act,**data))
+role('bendahara'); request(path,{'action':'invoice'},expected=403)
+role('kadis'); request(path,{'action':'sign','confirmed':'1'})
+role('sekretariat')
+body,_=request(path,{'action':'handover','recipient':'Penerima Lokasi Lain','confirmed':'1'})
+assert 'Permohonan selesai.' in body and 'Aula Desa Contoh' in body, 'Lokasi di luar Dispar harus selesai tanpa SKRD, STS, dan STBP'
+body,_=request(f'/permohonan/{other}/lembar-periksa')
+assert 'Aula Desa Contoh' in body and 'lokasi di luar dispar' in body.lower(), 'Lembar periksa harus menandai retribusi tidak berlaku'
 request('/demo/reset',{})
 print(f'PASS: {checks} request checks; seven roles, lifecycle, revision, guards, archive, document preview, frozen invoice, relief decided at first review (25% approved, free, rejected).')
 

@@ -98,7 +98,7 @@ class DemoController extends Controller
             if(!empty($r['deleted_at'])) return false;
             if(isset($stage[$kind])&&!in_array($r['status'],$stage[$kind])) return false;
             if($kind==='antrean'&&in_array($r['status'],['selesai','ditolak'])) return false;
-            if($q->filled('q')&&!str_contains(mb_strtolower($r['name'].' '.$r['tracking'].' '.$r['pic'].' '.collect(W::locations())->firstWhere('id',$r['location_id'])['name']),mb_strtolower($q->string('q')->toString()))) return false;
+            if($q->filled('q')&&!str_contains(mb_strtolower($r['name'].' '.$r['tracking'].' '.$r['pic'].' '.D::locationName($r,collect(W::locations())->keyBy('id'))),mb_strtolower($q->string('q')->toString()))) return false;
             if($q->filled('status')&&$r['status']!==$q->status) return false;
             if($q->filled('lokasi')&&$r['location_id']!==(int)$q->lokasi) return false;
             if($q->boolean('mine')&&(D::OWNER[$r['status']]??null)!==$this->role()) return false;
@@ -150,9 +150,11 @@ class DemoController extends Controller
         $data['letter_source']=array_filter($source['letter_source']??[],fn($v)=>$v!==null&&$v!=='');
         $uploadedRequirements=[];
         $loc=collect(W::locations())->firstWhere('id',(int)$data['location_id']);
+        $isOther=!empty($loc['other']);
+        if($isOther) $q->validate(['location_other_name'=>'required|string|min:3|max:150','location_other_address'=>'required|string|min:5|max:255']);
         $requirements=\App\Support\PermitRequirements::forLocation($loc);
         $all=W::requests();
-        $conflicts=D::conflicts($all,['location_id'=>(int)$data['location_id'],'date'=>$data['date'],'days'=>(int)$data['days']]);
+        $conflicts=D::conflicts($all,['location_id'=>(int)$data['location_id'],'date'=>$data['date'],'days'=>(int)$data['days'],'other'=>$isOther]);
         if($conflicts&&!$q->boolean('ignore_conflict')) return back()->withErrors(['conflict'=>'Jadwal bentrok dengan '.implode('; ',array_map(fn($c)=>$c['tracking'].' ('.D::date($c['date']).', '.$c['days'].' hari, '.(D::STATUS[$c['status']]??$c['status']).')',$conflicts)).'. Ubah tanggal atau lokasi, atau centang "Tetap daftarkan" bila bentrok sudah disadari.'])->withInput();
         $relief=in_array($q->discount,['25','free'],true)?$q->discount:null;
         if($relief&&!$loc['managed']) return back()->withErrors(['discount'=>'Keringanan atau bebas biaya hanya dapat diajukan untuk lokasi yang dikelola Dispar.'])->withInput();
@@ -181,7 +183,7 @@ class DemoController extends Controller
             }
         }
         $id=(int)collect($all)->max('id')+1;
-        $r=array_merge(['email'=>null,'discount_reason'=>null],$data,['id'=>$id,'tracking'=>'DPR-'.date('Y').'-'.str_pad((string)$id,4,'0',STR_PAD_LEFT),'location_id'=>(int)$data['location_id'],'days'=>(int)$data['days'],'submitted'=>date('Y-m-d'),'status'=>'masuk','files'=>array_map(fn($v)=>['label'=>$v,'name'=>'contoh_'.str_replace(' ','_',strtolower($v)).'.pdf','sample'=>true],$requirements),'discount'=>$relief?'diajukan':'tidak_diajukan','relief'=>$relief==='free'?'pembebasan':($relief==='25'?'pengurangan':'normal'),'discount_percent'=>0,'draft'=>'','version'=>1,'bill'=>null,'payment'=>null,'documents'=>[],'signed'=>false,'recipient'=>null,'completed'=>null,'history'=>[['at'=>date('Y-m-d H:i'),'role'=>$this->role(),'action'=>'Permohonan dicatat','note'=>'Berkas contoh digunakan dalam demo.']]]);
+        $r=array_merge(['email'=>null,'discount_reason'=>null],$data,['id'=>$id,'tracking'=>'DPR-'.date('Y').'-'.str_pad((string)$id,4,'0',STR_PAD_LEFT),'location_id'=>(int)$data['location_id'],'location_other_name'=>$isOther?trim((string)$q->location_other_name):null,'location_other_address'=>$isOther?trim((string)$q->location_other_address):null,'days'=>(int)$data['days'],'submitted'=>date('Y-m-d'),'status'=>'masuk','files'=>array_map(fn($v)=>['label'=>$v,'name'=>'contoh_'.str_replace(' ','_',strtolower($v)).'.pdf','sample'=>true],$requirements),'discount'=>$relief?'diajukan':'tidak_diajukan','relief'=>$relief==='free'?'pembebasan':($relief==='25'?'pengurangan':'normal'),'discount_percent'=>0,'draft'=>'','version'=>1,'bill'=>null,'payment'=>null,'documents'=>[],'signed'=>false,'recipient'=>null,'completed'=>null,'history'=>[['at'=>date('Y-m-d H:i'),'role'=>$this->role(),'action'=>'Permohonan dicatat','note'=>'Berkas contoh digunakan dalam demo.']]]);
         if($relief&&!$uploadedRequirements) $r['files'][]=['label'=>D::RELIEF_REQUIREMENT,'name'=>'contoh_dokumen_pendukung_keringanan.pdf','sample'=>true];
         if($conflicts) $r['history'][0]['note']=trim(($r['history'][0]['note']??'').' Jadwal bentrok disadari: '.implode(', ',array_column($conflicts,'tracking')).'.');
         if($uploadedRequirements) { $r['files']=$uploadedRequirements; $r['history'][0]['note']='Berkas diunggah untuk demo lokal.'; }
@@ -267,12 +269,12 @@ class DemoController extends Controller
                 $label=$action==='send'?'Draft dikirim ke Kabid':'Draft disimpan'; break;
             case 'release':
                 $r['documents'][]='Surat Persetujuan';
-                if(D::isFree($r)) { $r['status']='ttd'; $label='Surat dirilis; bebas biaya, retribusi dilewati'; }
+                if(D::noFee($r)) { $r['status']='ttd'; $label=D::isFree($r)?'Surat dirilis; bebas biaya, retribusi dilewati':'Surat dirilis; lokasi non-Dispar, tanpa retribusi'; }
                 else { $r['status']='tagihan'; $label='Surat dirilis untuk proses retribusi'; }
                 break;
             case 'save_assessment':
             case 'invoice':
-                abort_if(D::isFree($r),403,'Permohonan bebas biaya tidak memiliki penetapan retribusi.');
+                abort_if(D::noFee($r),403,'Permohonan ini tidak memiliki penetapan retribusi.');
                 if(\App\Support\FinanceDocument::tariffMissing($r)) return back()->withErrors(['action'=>'Tarif belum ditetapkan untuk lokasi dan jenis kegiatan ini pada tanggal kegiatan. Minta admin menetapkannya di Data Master sebelum penetapan.']);
                 if(\App\Support\FinanceDocument::sourceChanges($r)) return back()->withErrors(['action'=>'Sumber SKRD berubah. Tinjau dan simpan template SKRD sebelum penerbitan.']);
                 if($action==='invoice'&&$r['discount']==='diajukan') return back()->withErrors(['action'=>'Keputusan keringanan belum tersedia. Penetapan ditunda. Gunakan contoh pengajuan yang sudah disetujui untuk demo diskon; kewenangan keputusan belum diasumsikan.']);
@@ -293,10 +295,10 @@ class DemoController extends Controller
                 $r['payment']=['date'=>$q->payment_date,'proof'=>$r['uploads']['proof']['name']??'bukti_pembayaran_contoh.pdf']; $r['status']='ttd';
                 $r['documents']=array_unique(array_merge($r['documents'],['STBP','STS'])); $label='Pembayaran demo dikonfirmasi; STBP dan STS demo dibuat'; break;
             case 'sign':
-                $q->validate(['confirmed'=>'accepted']); abort_unless($r['payment']||D::isFree($r),422); $r['signed']=true; $r['signature']=['name'=>W::database()?\Illuminate\Support\Facades\DB::table('pengguna')->where('pengguna_id',W::actor())->value('nama'):'Drs. Aditya Pratama (fiktif)','at'=>date('Y-m-d H:i'),'reference'=>'SIM-'.$r['tracking']]; $r['status']='serah'; $label='Simulasi tanda tangan selesai'; break;
+                $q->validate(['confirmed'=>'accepted']); abort_unless($r['payment']||D::noFee($r),422); $r['signed']=true; $r['signature']=['name'=>W::database()?\Illuminate\Support\Facades\DB::table('pengguna')->where('pengguna_id',W::actor())->value('nama'):'Drs. Aditya Pratama (fiktif)','at'=>date('Y-m-d H:i'),'reference'=>'SIM-'.$r['tracking']]; $r['status']='serah'; $label='Simulasi tanda tangan selesai'; break;
             case 'handover':
                 $q->validate(['confirmed'=>'accepted','recipient'=>'required|string|max:100']);
-                $needed=D::isFree($r)?['Surat Persetujuan']:['Surat Persetujuan','SKRD','STBP'];
+                $needed=D::noFee($r)?['Surat Persetujuan']:['Surat Persetujuan','SKRD','STBP'];
                 abort_unless($r['signed']&&count(array_intersect($needed,$r['documents']))===count($needed),422);
                 $r['recipient']=$q->recipient; $r['completed']=date('Y-m-d'); $r['status']='selesai'; $label='Dokumen diserahkan; permohonan selesai'; break;
         }
@@ -352,7 +354,7 @@ class DemoController extends Controller
     }
     public function template(Request $q,int $id,string $type)
     {
-        $this->requireRole(['bendahara']); $r=$this->record($id);
+        $this->requireRole(['bendahara']); $r=$this->record($id); abort_if(D::noFee($r),403,'Permohonan ini tidak memiliki dokumen retribusi.');
         abort_unless(in_array($type,['skrd','sts','stbp'])&&in_array($r['status'],['tagihan','bayar','ttd']),403);
         if($q->isMethod('post')) {
             if($type==='skrd') {
@@ -397,7 +399,7 @@ class DemoController extends Controller
     }
     public function upload(Request $q,int $id,string $type)
     {
-        $this->requireRole(['bendahara']); $r=$this->record($id);
+        $this->requireRole(['bendahara']); $r=$this->record($id); abort_if(D::noFee($r),403,'Permohonan ini tidak memiliki dokumen retribusi.');
         abort_unless(in_array($type,['skrd','sts','stbp','proof'])&&in_array($r['status'],['tagihan','bayar','ttd']),403);
         if($type==='proof') abort_unless($r['status']==='bayar',403);
         abort_if($type==='skrd'&&isset($r['skrd_snapshot']),422,'SKRD sudah terbit. Gunakan revisi template beralasan; penggantian unggahan final belum tersedia.');

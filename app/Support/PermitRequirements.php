@@ -22,7 +22,7 @@ class PermitRequirements
     public static function checklist(array $r,array $location): array
     {
         $files=array_column($r['files']??[],null,'label');
-        $free=DemoData::isFree($r);
+        $free=DemoData::noFee($r); $why=DemoData::isOther($r)?'lokasi di luar Dispar':'bebas biaya';
         $row=fn(string $label,bool $has,bool $required,string $note='')=>['label'=>$label,'state'=>$has?'ada':($required?'belum':'tidak_ada'),'note'=>$has?'ada':($required?'belum ada':($note!==''?$note:'-'))];
         $rows=[
             $row(DemoData::REQUIREMENTS[0],isset($files[DemoData::REQUIREMENTS[0]]),true),
@@ -32,7 +32,7 @@ class PermitRequirements
             $row(DemoData::DLH_REQUIREMENT,isset($files[DemoData::DLH_REQUIREMENT]),self::needsDlh($location)),
         ];
         if(($r['discount']??'tidak_diajukan')!=='tidak_diajukan') $rows[]=$row(DemoData::RELIEF_REQUIREMENT,isset($files[DemoData::RELIEF_REQUIREMENT]),true);
-        $money=fn(string $label,bool $has)=>$free?['label'=>$label,'state'=>'tidak_ada','note'=>'- (bebas biaya)']:$row($label,$has,false,'belum ada');
+        $money=fn(string $label,bool $has)=>$free?['label'=>$label,'state'=>'tidak_ada','note'=>'- ('.$why.')']:$row($label,$has,false,'belum ada');
         $rows[]=$money('Bukti transfer (TF)',!empty($r['uploads']['proof']));
         $rows[]=$money('SKRD (Surat Ketetapan Retribusi Daerah)',in_array('SKRD',$r['documents']??[],true));
         $rows[]=$money('STS (Surat Tanda Setoran)',in_array('STS',$r['documents']??[],true));

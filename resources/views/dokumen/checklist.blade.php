@@ -8,9 +8,9 @@
         <div><dt>Nomor tiket</dt><dd>{{ $r['tracking'] }}</dd></div>
         <div><dt>Pemohon</dt><dd>{{ $r['name'] }} ({{ $r['pic'] }})</dd></div>
         <div><dt>Kegiatan</dt><dd>{{ $r['activity'] }}</dd></div>
-        <div><dt>Lokasi</dt><dd>{{ $loc['name'] }}</dd></div>
+        <div><dt>Lokasi</dt><dd>{{ \App\Support\DemoData::locationName($r,$locations) }}</dd></div>@if(\App\Support\DemoData::isOther($r))<div><dt>Alamat lokasi</dt><dd>{{ $r['location_other_address'] }}</dd></div>@endif
         <div><dt>Tanggal pelaksanaan</dt><dd>{{ \App\Support\DemoData::date($r['date']) }} · {{ $r['days'] }} hari</dd></div>
-        @if(\App\Support\DemoData::isFree($r))<div><dt>Retribusi</dt><dd>Bebas biaya (disetujui)</dd></div>@endif
+        @if(\App\Support\DemoData::noFee($r))<div><dt>Retribusi</dt><dd>{{ \App\Support\DemoData::noFeeReason($r) }}{{ \App\Support\DemoData::isFree($r)?' (disetujui)':'' }}</dd></div>@endif
     </dl>
     <table class="checklist-table">
         <thead><tr><th>Persyaratan Permohonan</th><th>Keterangan</th></tr></thead>

@@ -36,7 +36,7 @@
 </section>
 @endif
 
-<div class="row g-4">@foreach($locations as $loc)<div class="col-md-6"><section class="panel p-4"><div class="panel-title"><span class="stat-icon"><x-icon name="pin"/></span><span class="status-badge {{ $loc['active']?'status-selesai':'status-ditolak' }}">{{ $loc['active']?'Aktif':'Nonaktif' }}</span></div><h2>{{ $loc['name'] }}</h2><p class="small text-secondary mt-2">{{ $loc['area'] }} · {{ $loc['managed']?'Dikelola Dispar':'Dikelola pihak lain' }}@if($db) · {{ !empty($loc['dlh'])?'Wajib rekomendasi DLH':'Tanpa rekomendasi DLH' }}@endif</p>
+<div class="row g-4">@foreach($locations->reject(fn($l)=>!empty($l['other'])) as $loc)<div class="col-md-6"><section class="panel p-4"><div class="panel-title"><span class="stat-icon"><x-icon name="pin"/></span><span class="status-badge {{ $loc['active']?'status-selesai':'status-ditolak' }}">{{ $loc['active']?'Aktif':'Nonaktif' }}</span></div><h2>{{ $loc['name'] }}</h2><p class="small text-secondary mt-2">{{ $loc['area'] }} · {{ $loc['managed']?'Dikelola Dispar':'Dikelola pihak lain' }}@if($db) · {{ !empty($loc['dlh'])?'Wajib rekomendasi DLH':'Tanpa rekomendasi DLH' }}@endif</p>
 <form method="post" action="{{ route('master.update',$loc['id']) }}">@csrf<label class="form-label" for="rate{{ $loc['id'] }}">{{ $db?'Tarif per hari (Rp)':'Tarif contoh per hari (Rp)' }}</label><div class="d-flex gap-2"><input type="number" id="rate{{ $loc['id'] }}" name="rate" class="form-control" min="0" max="100000000" value="{{ $loc['rate'] }}" required><button class="btn btn-outline-primary">Simpan</button></div></form>
 @if($db)
 <details class="mt-3"><summary>Ubah data lokasi</summary>

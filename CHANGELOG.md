@@ -64,16 +64,21 @@ resmi di produksi (lihat bagian "Belum dikerjakan").
 **Diubah (tes)**: tanggal pendaftaran di lima tes digeser agar tidak bentrok dengan data contoh.
 **Dampak**: tidak ada migrasi.
 
+## Tahap 8: Lokasi di luar Dispar, input manual (`docs/TAHAP-8-LOKASI-DI-LUAR-DISPAR.md`)
+**Ditambah**: pilihan "Lainnya (di luar lokasi Dispar)" dengan nama dan alamat manual; jalur tanpa retribusi (tanpa SKRD, STS, STBP, bukti transfer); nama lokasi manual tampil di antrean, kalender, arsip, pencarian, lembar periksa, dan Surat Persetujuan.
+**Asumsi menunggu konfirmasi**: lokasi di luar Dispar tidak dikenai retribusi.
+**Dampak**: wajib `php artisan migrate`; sesi demo lama perlu direset.
+
 ## Belum dikerjakan (menunggu keputusan atau tahap berikutnya)
 | Kode | Isi | Menunggu |
 |---|---|---|
 | T-2 | Migrasi hanya MariaDB/MySQL; contoh `.env` default SQLite | Keputusan mesin database produksi |
 | T-4 | Ekspor/cadangan terbuka untuk semua peran | Kebijakan peran yang boleh mengunduh |
 | T-5 | Pemuatan semua permohonan berulang (mode database) | Pengukuran di mesin ber-PHP |
+| - | Kolom lokasi pada ekspor CSV | Tahap tersendiri |
 | T-11 | Tanda tangan simulasi, kirim ulang tagihan simulasi | Keputusan alur tanda tangan produksi |
 | T-12 | (sisa) Data resmi tarif dan lokasi perlu diinput admin lewat menu | Data resmi dari dinas |
 | - | Tahap 6: persyaratan sesuai lembar periksa fisik (jasa impresariat/promotor PTSP bersyarat, KTP, rekomendasi DLH bersyarat) dan cetak lembar periksa | Konfirmasi daftar dari dinas |
 | - | Layar verifikasi per berkas oleh petugas dan nama pejabat otomatis di lembar periksa | Tahap tersendiri |
-| - | Tahap 8 (berikutnya): lokasi di luar master (input manual) | Keputusan kebijakan retribusi untuk lokasi non-Dispar |
 | - | Watermark "DEMO - BUKAN DOKUMEN RESMI" pada dokumen produksi, tanda tangan simulasi | Alur tanda tangan produksi dan template resmi |
 | - | Kalender berwarna per tahap dan nama pelaku pada riwayat dari cabang biru | Tahap tersendiri |

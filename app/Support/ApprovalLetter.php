@@ -10,7 +10,7 @@ class ApprovalLetter
   return [
    'pemohon'=>$r['name'], 'pic'=>$r['pic'], 'alamat'=>$r['address']??'Belum diisi',
    'jabatan'=>$extra['pic_position']??'Belum diisi',
-   'kegiatan'=>$extra['event_name']??$r['activity'], 'lokasi'=>$location['name']??'Belum diisi',
+   'kegiatan'=>$extra['event_name']??$r['activity'], 'lokasi'=>DemoData::isOther($r)?$r['location_other_name'].(!empty($r['location_other_address'])?' ('.$r['location_other_address'].')':''):($location['name']??'Belum diisi'),
    'tanggal'=>DemoData::date($r['date']), 'durasi'=>(string)$r['days'].' hari',
    'jam_mulai'=>$extra['start_time']??'Belum diisi', 'jam_selesai'=>$extra['end_time']??'Belum diisi',
    'nomor_permohonan'=>$extra['request_number']??'Belum diisi',

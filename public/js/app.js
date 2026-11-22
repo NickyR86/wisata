@@ -212,7 +212,7 @@ document.addEventListener('change', event => {
     const addDays = (value, n) => { const d = new Date(value + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
     function sync() {
         const id = Number(loc.value);
-        if (!id || !date.value) { box.hidden = true; return; }
+        if (!id || !date.value || loc.selectedOptions[0]?.dataset.other === '1') { box.hidden = true; return; }
         const end = addDays(date.value, Math.max(0, (parseInt(days.value || '1', 10) || 1) - 1));
         const hits = occupied.filter(o => o.loc === id && o.from <= end && o.to >= date.value);
         box.hidden = hits.length === 0;
@@ -220,5 +220,20 @@ document.addEventListener('change', event => {
     }
     [loc, date, days].forEach(el => el.addEventListener('change', sync));
     days.addEventListener('input', sync);
+    sync();
+})();
+
+(() => {
+    const loc = document.getElementById('location'), box = document.getElementById('otherLocationBox');
+    if (!loc || !box) return;
+    const name = document.getElementById('location_other_name'), address = document.getElementById('location_other_address');
+    function sync() {
+        const other = loc.selectedOptions[0]?.dataset.other === '1';
+        box.hidden = !other;
+        if (name) name.required = other;
+        if (address) address.required = other;
+        if (!other) { if (name) name.value = ''; if (address) address.value = ''; }
+    }
+    loc.addEventListener('change', sync);
     sync();
 })();

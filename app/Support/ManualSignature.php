@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\DB;
 class ManualSignature
 {
  public static function eligible(array $r): bool {
-  return empty($r['deleted_at'])&&$r['status']==='ttd'&&!$r['signed']&&(!empty($r['payment'])||DemoData::isFree($r))&&in_array('Surat Persetujuan',$r['documents']);
+  return empty($r['deleted_at'])&&$r['status']==='ttd'&&!$r['signed']&&(!empty($r['payment'])||DemoData::noFee($r))&&in_array('Surat Persetujuan',$r['documents']);
  }
  public static function token(array $r): string {
   return hash('sha256',json_encode([$r['id'],$r['version'],DemoData::letter($r)],JSON_UNESCAPED_UNICODE|JSON_THROW_ON_ERROR));

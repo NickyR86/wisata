@@ -25,6 +25,8 @@ class DemoData
     ];
     public const ACTIVITIES = ['Festival budaya', 'Seminar / workshop', 'Bazar UMKM', 'Kegiatan olahraga', 'Fotografi / prewedding', 'Konser / pertunjukan'];
     public const RELIEF_REQUIREMENT = 'Dokumen pendukung keringanan';
+    /** Lokasi bawaan untuk kegiatan di luar lokasi yang dikelola Dispar (nama dan alamat diisi manual pada permohonan). */
+    public const OTHER_LOCATION_ID = 5;
     /** Bebas biaya yang sudah disetujui: tidak ada SKRD, STS, STBP, maupun bukti transfer. */
     /** Tanggal terakhir kegiatan (YYYY-MM-DD). */
     public static function endDate(array $r): string
@@ -37,14 +39,24 @@ class DemoData
      */
     public static function conflicts(array $all,array $cand,?int $ignoreId=null): array
     {
+        if(!empty($cand['other'])) return [];
         $from=$cand['date']; $to=self::endDate($cand); $out=[];
         foreach($all as $r){
-            if(($ignoreId&&$r['id']===$ignoreId)||!empty($r['deleted_at'])||$r['status']==='ditolak'||(int)$r['location_id']!==(int)$cand['location_id']) continue;
+            if(($ignoreId&&$r['id']===$ignoreId)||self::isOther($r)||!empty($r['deleted_at'])||$r['status']==='ditolak'||(int)$r['location_id']!==(int)$cand['location_id']) continue;
             if($r['date']<=$to&&self::endDate($r)>=$from) $out[]=$r;
         }
         return $out;
     }
     public static function isFree(array $r): bool { return ($r['relief']??'')==='pembebasan' && ($r['discount']??'')==='disetujui'; }
+    public static function isOther(array $r): bool { return !empty($r['location_other_name']); }
+    /** Tidak ada retribusi: bebas biaya yang disetujui, atau lokasi di luar Dispar. Tahap tagihan dan pembayaran dilewati. */
+    public static function noFee(array $r): bool { return self::isFree($r) || self::isOther($r); }
+    public static function noFeeReason(array $r): string { return self::isOther($r) ? 'Lokasi di luar Dispar' : 'Bebas biaya'; }
+    public static function locationName(array $r,$locations): string
+    {
+        if(self::isOther($r)) return (string)$r['location_other_name'];
+        return (string)($locations[$r['location_id']]['name']??'-');
+    }
     public static function reliefName(array $r): string { return ($r['relief']??'')==='pembebasan' ? 'Bebas biaya' : 'Keringanan 25%'; }
     // Daftar persyaratan mengikuti lembar periksa kelengkapan dinas.
     public const REQUIREMENTS = ['Surat permohonan persetujuan menyelenggarakan acara', 'Proposal Kegiatan/Rundown', 'Fotokopi KTP pemohon', 'Surat Rekomendasi dari Dinas Lingkungan Hidup'];
@@ -58,6 +70,7 @@ class DemoData
             ['id'=>2,'name'=>'Jeramba Gantung','area'=>'Pangkalpinang','rate'=>500000,'managed'=>true,'active'=>true],
             ['id'=>3,'name'=>'Taman Sari','area'=>'Taman Sari','rate'=>450000,'managed'=>true,'active'=>true],
             ['id'=>4,'name'=>'Alun-alun Taman Merdeka','area'=>'Taman Sari','rate'=>900000,'managed'=>true,'active'=>true],
+            ['id'=>self::OTHER_LOCATION_ID,'name'=>'Lainnya (di luar lokasi Dispar)','area'=>'-','rate'=>0,'managed'=>false,'active'=>true,'other'=>true],
         ];
     }
 

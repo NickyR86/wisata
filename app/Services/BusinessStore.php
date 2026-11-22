@@ -14,7 +14,7 @@ class BusinessStore
  public function locations(): array {
   return DB::table('lokasi')->orderBy('lokasi_id')->get()->map(function($l){
    $rate=DB::table('tarif_retribusi')->where('lokasi_id',$l->lokasi_id)->where('berlaku_mulai','<=',date('Y-m-d'))->where(fn($q)=>$q->whereNull('berlaku_sampai')->orWhere('berlaku_sampai','>=',date('Y-m-d')))->orderByDesc('berlaku_mulai')->value('tarif');
-   return ['id'=>(int)$l->lokasi_id,'name'=>$l->nama_lokasi,'area'=>'Pangkalpinang','rate'=>(float)($rate??0),'managed'=>(bool)$l->dikelola_dispar,'active'=>(bool)$l->status_aktif,'dlh'=>(bool)($l->butuh_rekomendasi_dlh??false)];
+   return ['id'=>(int)$l->lokasi_id,'name'=>$l->nama_lokasi,'area'=>'Pangkalpinang','rate'=>(float)($rate??0),'managed'=>(bool)$l->dikelola_dispar,'active'=>(bool)$l->status_aktif,'dlh'=>(bool)($l->butuh_rekomendasi_dlh??false),'other'=>(bool)($l->lainnya??false)];
   })->all();
  }
  public function tariff(int $location,string $activity,string $date): ?object {
@@ -27,7 +27,7 @@ class BusinessStore
  private function hydrate(object $p): array {
   $id=$p->permohonan_id;
   $r=['id'=>(int)$id,'_v'=>(int)$p->lock_version,'tracking'=>$p->nomor_tracking,'name'=>$p->nama_pemohon,'pic'=>$p->penanggung_jawab,'phone'=>$p->kontak_pemohon,'email'=>$p->email_pemohon,'address'=>$p->alamat_pemohon,
-   'location_id'=>(int)$p->lokasi_id,'activity'=>DB::table('jenis_kegiatan')->where('jenis_kegiatan_id',$p->jenis_kegiatan_id)->value('nama'),'date'=>$p->tanggal_kegiatan,'days'=>(int)$p->jumlah_hari,'submitted'=>substr($p->diterima_pada,0,10),'status'=>$p->status,
+   'location_id'=>(int)$p->lokasi_id,'location_other_name'=>$p->lokasi_lain_nama??null,'location_other_address'=>$p->lokasi_lain_alamat??null,'activity'=>DB::table('jenis_kegiatan')->where('jenis_kegiatan_id',$p->jenis_kegiatan_id)->value('nama'),'date'=>$p->tanggal_kegiatan,'days'=>(int)$p->jumlah_hari,'submitted'=>substr($p->diterima_pada,0,10),'status'=>$p->status,
    'discount'=>$p->status_keringanan,'relief'=>$p->jenis_keringanan,'relief_note'=>$p->catatan_keputusan_keringanan,'discount_percent'=>(float)$p->persentase_disetujui,'discount_reason'=>$p->alasan_keringanan,
    'deleted_at'=>$p->deleted_at,'deleted_by'=>$p->deleted_by,'delete_reason'=>$p->alasan_hapus,
    'draft'=>'','version'=>1,'bill'=>null,'payment'=>null,'files'=>[],'documents'=>[],'templates'=>[],'uploads'=>[],'document_sources'=>[],'signed'=>false,'recipient'=>null,'completed'=>null,'history'=>[]];
@@ -82,7 +82,7 @@ class BusinessStore
    abort_unless(DB::table('lokasi')->where('lokasi_id',$r['location_id'])->where('status_aktif',true)->exists(),422);
    $id=DB::table('permohonan')->insertGetId($this->stamp([
     'data_surat'=>$this->json($r['letter_source']??[]),'nomor_tracking'=>'TMP-'.bin2hex(random_bytes(12)),'nama_pemohon'=>$r['name'],'penanggung_jawab'=>$r['pic'],'kontak_pemohon'=>$r['phone'],'email_pemohon'=>$r['email']??null,'alamat_pemohon'=>$r['address']??'Belum diisi (demo)',
-    'lokasi_id'=>$r['location_id'],'jenis_kegiatan_id'=>$kind,'tanggal_kegiatan'=>$r['date'],'jumlah_hari'=>$r['days'],'diterima_pada'=>now(),'status'=>'masuk','diinput_oleh'=>$actor,
+    'lokasi_id'=>$r['location_id'],'lokasi_lain_nama'=>$r['location_other_name']??null,'lokasi_lain_alamat'=>$r['location_other_address']??null,'jenis_kegiatan_id'=>$kind,'tanggal_kegiatan'=>$r['date'],'jumlah_hari'=>$r['days'],'diterima_pada'=>now(),'status'=>'masuk','diinput_oleh'=>$actor,
     'jenis_keringanan'=>$r['relief']??($r['discount']==='tidak_diajukan'?'normal':'pengurangan'),'status_keringanan'=>$r['discount'],'alasan_keringanan'=>$r['discount_reason']??null,'persentase_disetujui'=>$r['discount_percent']??0,
    ]),'permohonan_id');
    $r['id']=$id;$r['tracking']='DPR-'.date('Y').'-'.str_pad((string)$id,4,'0',STR_PAD_LEFT);$r['_v']=0;$r['_history_count']=0;
@@ -175,7 +175,7 @@ class BusinessStore
     $finalIds[$kind]=$this->document($r,$kind,$owner,$actor,$old);
    }
    if($r['status']==='selesai'&&!DB::table('serah_terima')->where('permohonan_id',$id)->exists()){
-    $free=D::isFree($r); abort_unless($r['signed']&&($free||$payment)&&count($finalIds)===($free?1:4),422);
+    $free=D::noFee($r); abort_unless($r['signed']&&($free||$payment)&&count($finalIds)===($free?1:4),422);
     $handover=DB::table('serah_terima')->insertGetId($this->stamp(['permohonan_id'=>$id,'nama_penerima'=>$r['recipient'],'diserahkan_oleh'=>$actor,'diserahkan_pada'=>$now,'kelengkapan_diperiksa'=>true]),'serah_terima_id');
     foreach($finalIds as $kind=>$version)if($kind!=='sts')DB::table('serah_terima_dokumen')->insert(['serah_terima_id'=>$handover,'versi_dokumen_id'=>$version]);
    }
@@ -244,6 +244,7 @@ class BusinessStore
  public function updateLocation(int $id,array $d,int $actor): void {
   DB::transaction(function()use($id,$d,$actor){
    $old=DB::table('lokasi')->where('lokasi_id',$id)->lockForUpdate()->first(); abort_unless($old,404);
+   abort_if((bool)($old->lainnya??false),422,'Lokasi "Lainnya" adalah bawaan sistem untuk kegiatan di luar Dispar dan tidak dapat diubah.');
    $name=trim($d['name']);
    abort_if(DB::table('lokasi')->where('lokasi_id','!=',$id)->pluck('nama_lokasi')->contains(fn($n)=>$this->sameName($n,$name)),422,'Nama lokasi sudah dipakai lokasi lain.');
    $new=['nama_lokasi'=>$name,'status_aktif'=>(bool)$d['active'],'dikelola_dispar'=>(bool)$d['managed'],'butuh_rekomendasi_dlh'=>(bool)$d['dlh']];
@@ -254,6 +255,7 @@ class BusinessStore
  public function deleteLocation(int $id,int $actor): void {
   DB::transaction(function()use($id,$actor){
    $old=DB::table('lokasi')->where('lokasi_id',$id)->lockForUpdate()->first(); abort_unless($old,404);
+   abort_if((bool)($old->lainnya??false),422,'Lokasi "Lainnya" adalah bawaan sistem dan tidak dapat dihapus.');
    abort_if(DB::table('permohonan')->where('lokasi_id',$id)->exists(),422,'Lokasi sudah dipakai permohonan dan tidak dapat dihapus. Nonaktifkan saja agar tidak muncul di formulir.');
    abort_if(DB::table('rincian_tagihan_retribusi as r')->join('tarif_retribusi as t','t.tarif_retribusi_id','=','r.tarif_retribusi_id')->where('t.lokasi_id',$id)->exists(),422,'Tarif lokasi sudah dirujuk tagihan dan tidak dapat dihapus. Nonaktifkan saja.');
    DB::table('tarif_retribusi')->where('lokasi_id',$id)->delete();
@@ -267,6 +269,7 @@ class BusinessStore
    abort_if(DB::table('jenis_kegiatan')->pluck('nama')->contains(fn($n)=>$this->sameName($n,$name)),422,'Jenis kegiatan sudah ada.');
    $id=(int)DB::table('jenis_kegiatan')->insertGetId($this->stamp(['nama'=>$name,'aktif'=>true]),'jenis_kegiatan_id');
    foreach($this->locations() as $loc){
+    if(!empty($loc['other'])) continue;
     DB::table('tarif_retribusi')->insert($this->stamp(['lokasi_id'=>$loc['id'],'jenis_kegiatan_id'=>$id,'tarif'=>(int)$loc['rate'],'satuan'=>'hari','berlaku_mulai'=>date('Y-m-d'),'ditetapkan_oleh'=>$actor]));
    }
    $this->audit($actor,'kegiatan_dibuat','jenis_kegiatan',$id,null,['nama'=>$name]);
