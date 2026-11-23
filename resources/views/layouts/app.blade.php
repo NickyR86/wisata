@@ -2,7 +2,7 @@
 <html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light"><title>{{ $title }} · SIPTR Dispar</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
 <link href="{{ asset('css/siptr-reference.css') }}" rel="stylesheet"><link href="{{ asset('css/siptr-blade.css') }}" rel="stylesheet"><link href="{{ asset('css/ui-comfort.css') }}" rel="stylesheet"></head>
-<body data-access-role="{{ $role }}" data-access-identity="{{ config('siap.database_accounts')?'account:'.session('account_id'):'demo:'.$role }}" data-save-success="{{ session()-><a class="skip-link" href="#main">Lewati ke konten utama</a>has('success')?'1':'0' }}">
+<body data-access-role="{{ $role }}" data-access-identity="{{ config('siap.database_accounts')?'account:'.session('account_id'):'demo:'.$role }}" data-save-success="{{ session()->has('success')?'1':'0' }}"><a class="skip-link" href="#main">Lewati ke konten utama</a>
 @php
 $roles=['sekretariat'=>'Sekretariat','kabid'=>'Kepala Bidang','petugas'=>'Petugas Layanan Bidang','sekretaris'=>'Sekretaris','bendahara'=>'Bendahara Penerimaan','kadis'=>'Kepala Dinas','admin'=>'Admin'];
 $short=['sekretariat'=>'Sekretariat','kabid'=>'Kabid','petugas'=>'Petugas Layanan','sekretaris'=>'Sekretaris','bendahara'=>'Bendahara','kadis'=>'Kadis','admin'=>'Admin'];
