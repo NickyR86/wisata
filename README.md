@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # SIAP-Wisata — frontend Laravel Blade + Bootstrap
 
 Demo interaktif layanan permohonan kegiatan Dinas Pariwisata Kota Pangkalpinang.
@@ -137,3 +138,6 @@ Audit rinci: docs/AUDIT-FITUR-REFERENSI.md. Pengujian fitur tambahan: tests/docu
 ## Keputusan terbaru: informasi retribusi di antrean
 
 Informasi retribusi ditampilkan untuk semua peran di antrean dan detail. Sebelum SKRD: Belum ditetapkan, tanpa nominal estimasi. Setelah SKRD: nominal tetap dari penetapan, disertai Menunggu pembayaran atau Lunas. STS tidak menjadi syarat munculnya nominal maupun status lunas. Ringkasan agregat keuangan tetap khusus Bendahara/Kadis/Admin. Ketentuan ini menggantikan catatan sebelumnya tentang menyembunyikan nominal pada detail Sekretariat.
+=======
+# wisata
+>>>>>>> 3912cb8e66c66588e81d89504258317f9aff5152
