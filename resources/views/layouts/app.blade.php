@@ -1,8 +1,8 @@
 <!doctype html>
 <html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light"><title>{{ $title }} · SIPTR Dispar</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
-<link href="{{ asset('css/siptr-reference.css') }}" rel="stylesheet"><link href="{{ asset('css/siptr-blade.css') }}" rel="stylesheet"></head>
-<body data-access-role="{{ $role }}" data-access-identity="{{ config('siap.database_accounts')?'account:'.session('account_id'):'demo:'.$role }}" data-save-success="{{ session()->has('success')?'1':'0' }}">
+<link href="{{ asset('css/siptr-reference.css') }}" rel="stylesheet"><link href="{{ asset('css/siptr-blade.css') }}" rel="stylesheet"><link href="{{ asset('css/ui-comfort.css') }}" rel="stylesheet"></head>
+<body data-access-role="{{ $role }}" data-access-identity="{{ config('siap.database_accounts')?'account:'.session('account_id'):'demo:'.$role }}" data-save-success="{{ session()-><a class="skip-link" href="#main">Lewati ke konten utama</a>has('success')?'1':'0' }}">
 @php
 $roles=['sekretariat'=>'Sekretariat','kabid'=>'Kepala Bidang','petugas'=>'Petugas Layanan Bidang','sekretaris'=>'Sekretaris','bendahara'=>'Bendahara Penerimaan','kadis'=>'Kepala Dinas','admin'=>'Admin'];
 $short=['sekretariat'=>'Sekretariat','kabid'=>'Kabid','petugas'=>'Petugas Layanan','sekretaris'=>'Sekretaris','bendahara'=>'Bendahara','kadis'=>'Kadis','admin'=>'Admin'];
@@ -32,7 +32,7 @@ $activePage=($page??'')==='dashboard'||($page??'')==='detail'?'antrean':($page??
 <main class="main-wrap" id="main" tabindex="-1"><x-flash/>@yield('content')</main></div>
 <nav class="bottom-nav brand-rail">@foreach(array_slice($nav,0,4) as [$key,$label,$icon,$url])<a class="{{ $activePage===$key?'active':'' }}" href="{{ $url }}"><x-icon :name="$icon" size="22"/><span class="l text-truncate">{{ explode(' ',$label)[0] }}</span></a>@endforeach<button type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileNav" aria-label="Menu lainnya"><x-icon name="menu" size="22"/><span class="l">Lainnya</span></button></nav></div>
 <div class="offcanvas offcanvas-bottom" id="mobileNav" tabindex="-1" aria-labelledby="mobileNavTitle" style="height:75vh"><div class="offcanvas-header"><h2 class="fs-5" id="mobileNavTitle">Menu {{ $short[$role] }}</h2><button class="btn-close" data-bs-dismiss="offcanvas" aria-label="Tutup"></button></div><div class="offcanvas-body"><nav class="vstack gap-2">@foreach($nav as [$key,$label,$icon,$url])<a class="btn btn-light justify-content-start" href="{{ $url }}"><x-icon :name="$icon"/>{{ $label }}</a>@endforeach</nav></div></div>
-<script src="{{ asset('vendor/bootstrap/bootstrap.bundle.min.js') }}"></script><script src="{{ asset('js/app.js') }}"></script>@stack('scripts')
+<script src="{{ asset('vendor/bootstrap/bootstrap.bundle.min.js') }}"></script><script src="{{ asset('js/app.js') }}"></script><script src="{{ asset('js/ux.js') }}" defer></script>@stack('scripts')
 <script src="{{ asset('js/approval-pages.js') }}"></script>
 <script src="{{ asset('js/browser-access.js') }}"></script>
 </body></html>

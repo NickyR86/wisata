@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ asset('vendor/bootstrap/bootstrap.min.css') }}">
-<link rel="stylesheet" href="{{ asset('css/login.css') }}">
+<link rel="stylesheet" href="{{ asset('css/login.css') }}"><link rel="stylesheet" href="{{ asset('css/ui-comfort.css') }}">
 </head>
 <body>
 @php
@@ -16,7 +16,7 @@ $labels = ['sekretariat'=>'Sekretariat','kabid'=>'Kepala Bidang','petugas'=>'Pet
 @endphp
 <main class="login-grid">
 <section class="login-art" aria-label="SIPTR Dispar">
-<img src="{{ asset('images/login/latarlogin.png') }}" alt="Latar login Dinas Pariwisata">
+<img src="{{ asset('images/login/latarlogin.jpg') }}" alt="" width="1600" height="1020" loading="lazy" decoding="async">
 <div class="shade"></div><div class="inner">
 <div class="login-brand"><span class="login-crest"><img src="{{ asset('images/login/logo.png') }}" alt="Logo Dispar"></span><div><p class="brand-title">SIPTR Dispar</p><p class="brand-subtitle">Kota Pangkalpinang</p></div></div>
 <div><h2>Sistem Pengajuan Persetujuan Acara / Event</h2><p class="art-description">Satu alur, satu status. Pantau setiap permohonan penggunaan tempat acara / event dari berkas masuk hingga surat siap diambil.</p></div>
@@ -42,4 +42,4 @@ $labels = ['sekretariat'=>'Sekretariat','kabid'=>'Kepala Bidang','petugas'=>'Pet
 <p class="login-help">Lupa kata sandi? Hubungi Admin Dinas.</p>
 </div></section>
 </main>
-</body></html>
+<script src="{{ asset('js/ux.js') }}" defer></script></body></html>

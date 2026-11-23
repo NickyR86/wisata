@@ -69,6 +69,13 @@ resmi di produksi (lihat bagian "Belum dikerjakan").
 **Asumsi menunggu konfirmasi**: lokasi di luar Dispar tidak dikenai retribusi.
 **Dampak**: wajib `php artisan migrate`; sesi demo lama perlu direset.
 
+## Tahap 10: Konsistensi desain dan kenyamanan (`docs/TAHAP-10-UIUX.md`)
+**Diukur** di Chromium terhadap CSS asli: kontras, fokus keyboard, ukuran sentuh di ponsel. Audit awal dikoreksi (CSS yang dimuat sebenarnya 28 ukuran font, bukan 92).
+**Diperbaiki**: kontras lencana Tagihan/Bayar/TTD dan peringatan; penanda fokus keyboard yang sebelumnya tidak ada; isian dan tombol ponsel; skip link; gerakan berkurang; pencegah klik ganda; gambar login 8,7 MB menjadi 200 KB.
+**Ditambah**: `ui-comfort.css`, `ux.js`, `tests/ui_audit.cjs` (audit otomatis), rubrik skala kenyamanan, kuesioner SUS, dan skrip uji tugas.
+**Belum**: penyatuan ukuran font, sudut, dan warna (Tahap 10b); audit istilah; pengukuran pada halaman sungguhan.
+**Dampak**: tidak ada migrasi.
+
 ## Belum dikerjakan
 
 ### Tahap berikutnya (usulan)
@@ -76,7 +83,7 @@ resmi di produksi (lihat bagian "Belum dikerjakan").
 |---|---|---|
 | Uji | Menjalankan semua tahap di komputer ber-PHP dan MySQL (`migrate`, seluruh `tests/`, dicoba di browser) dan memperbaiki hasilnya | Belum ada tahap yang pernah dijalankan |
 | 9 | Hardening produksi: hapus watermark "DEMO" dan tanda tangan simulasi, batasi ekspor/cadangan per peran, rapikan migrasi untuk MySQL, CSP mode enforce, pembatasan laju endpoint lain, performa mode database | T-2, T-4, T-5, T-11 |
-| 10 | Kenyamanan dan konsistensi: kompres gambar login (8,9 MB), tampilan ponsel, aksesibilitas, penyamaan istilah dan format | - |
+| 10b | Menjalankan `ui_audit.cjs` pada aplikasi sungguhan, menyatukan ukuran font, sudut, warna ke token, dan audit istilah | Tahap 10 |
 | 11 | Sisa fitur: layar verifikasi per berkas oleh petugas, nama pelaku di riwayat, kalender berwarna per tahap, kolom lokasi di ekspor CSV, estimasi form mengikuti jenis kegiatan dan keringanan | - |
 | Akhir | Daftar pengecekan detail untuk website yang sudah jadi | Diminta pemilik |
 

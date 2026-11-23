@@ -1,0 +1,45 @@
+/*
+ * Tahap 10: kenyamanan dan aksesibilitas.
+ * Dimuat paling akhir. Seluruh perbaikan ada di berkas ini sehingga dapat dilepas
+ * (hapus tautan di layout) tanpa mengubah CSS lain.
+ */
+:root { --bs-warning-text-emphasis: #926211; --focus-ring: #155e91; }
+
+/* Kontras: teks status Tagihan/Bayar/TTD dan peringatan kuning 4,30:1 -> 4,68:1 (WCAG AA 4,5:1). */
+.status-bayar, .status-tagihan, .status-ttd { color: #926211; }
+
+/* Penanda fokus keyboard (sebelumnya tombol dan isian tanpa penanda sama sekali). */
+a:focus-visible, button:focus-visible, .btn:focus-visible, summary:focus-visible, [tabindex]:focus-visible,
+input:focus-visible, select:focus-visible, textarea:focus-visible,
+.form-control:focus-visible, .form-select:focus-visible, .form-check-input:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+}
+
+/* Hormati preferensi pengguna yang mengurangi gerakan. */
+@media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after {
+        animation-duration: .01ms !important; animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important; scroll-behavior: auto !important;
+    }
+}
+
+/* Ponsel: isian 16px mencegah zoom otomatis iOS; target sentuh minimal 44px (tombol kecil 40px). */
+@media (max-width: 768px) {
+    .form-control, .form-select, textarea.form-control { font-size: 16px; }
+    .btn { min-height: 44px; }
+    .btn-sm { min-height: 40px; }
+}
+
+/* Formulir yang sedang dikirim: cegah klik ganda. */
+.is-submitting { pointer-events: none; }
+.is-submitting .btn { opacity: .7; }
+
+/* Teks kecil di antarmuka (bukan dokumen cetak) dinaikkan ke 11px. */
+.attention-days small, .summary-footnote, .stepper .c { font-size: 11px; }
+
+/* Lompat ke konten utama untuk pengguna keyboard dan pembaca layar. */
+.skip-link { position: absolute; left: 8px; top: -48px; z-index: 2000; padding: 10px 16px; border-radius: 8px;
+    background: #155e91; color: #fff; font-weight: 600; text-decoration: none; }
+.skip-link:focus, .skip-link:focus-visible { top: 8px; }
